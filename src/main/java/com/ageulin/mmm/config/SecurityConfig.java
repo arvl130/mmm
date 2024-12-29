@@ -31,20 +31,17 @@ public class SecurityConfig {
             .csrf(Customizer.withDefaults())
             .logout(configure -> configure
                 .logoutUrl("/api/v1/auth/signout")
-                .logoutSuccessHandler(new LogoutSuccessHandler() {
-                    @Override
-                    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-                        var signOutResponse = new SignOutResponse("Sign out success.");
-                        var objectMapper = new ObjectMapper();
-                        var writer = response.getWriter();
-                        var json = objectMapper.writeValueAsString(signOutResponse);
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    var signOutResponse = new SignOutResponse("Sign out success.");
+                    var objectMapper = new ObjectMapper();
+                    var writer = response.getWriter();
+                    var json = objectMapper.writeValueAsString(signOutResponse);
 
-                        response.setStatus(HttpStatus.OK.value());
-                        response.setContentType("application/json");
-                        response.setCharacterEncoding("UTF-8");
-                        writer.print(json);
-                        writer.flush();
-                    }
+                    response.setStatus(HttpStatus.OK.value());
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    writer.print(json);
+                    writer.flush();
                 })
             )
             .authorizeHttpRequests(authorize -> authorize
@@ -64,17 +61,14 @@ public class SecurityConfig {
 
         // We can define this as a bean, so that it can be injected in other places,
         // but for now we only use it here, so there's no need to do that.
-        provider.setUserDetailsService(new UserDetailsService() {
-            @Override
-            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-                var user = userRepository.findByEmail(username);
-                if (user.isEmpty()) {
-                    throw new UsernameNotFoundException("Incorrect username or password.");
-                }
-
-                var u = user.get();
-                return new SecurityUser(u.getId(), u.getEmail(), u.getPassword(), u.getRoles());
+        provider.setUserDetailsService(username -> {
+            var user = userRepository.findByEmail(username);
+            if (user.isEmpty()) {
+                throw new UsernameNotFoundException("Incorrect username or password.");
             }
+
+            var u = user.get();
+            return new SecurityUser(u.getId(), u.getEmail(), u.getPassword(), u.getRoles());
         });
 
         return new ProviderManager(provider);

@@ -21,14 +21,7 @@ public class SecurityUser implements UserDetails, CredentialsContainer {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.roles.stream().map(role -> {
-            return new GrantedAuthority() {
-                @Override
-                public String getAuthority() {
-                    return "ROLE_" + role.getName().toUpperCase();
-                }
-            };
-        }).toList();
+        return this.roles.stream().map(role -> (GrantedAuthority) () -> "ROLE_" + role.getName().toUpperCase()).toList();
     }
 
     @Override
