@@ -1,9 +1,10 @@
 package com.ageulin.mmm.controllers;
 
-import com.ageulin.mmm.config.SecurityUser;
+import com.ageulin.mmm.config.UsernameAndPasswordUser;
 import com.ageulin.mmm.dtos.PublicUser;
 import com.ageulin.mmm.dtos.requests.SignInRequest;
 import com.ageulin.mmm.dtos.responses.*;
+import com.ageulin.mmm.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ public class AuthController {
         new HttpSessionSecurityContextRepository();
 
     private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
 
     @PostMapping("/signin")
     public ResponseEntity<BaseResponse> signIn(
@@ -43,27 +45,29 @@ public class AuthController {
 
         var authentication = authenticationManager.authenticate(token);
         if (!authentication.isAuthenticated()) {
-
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(new BaseResponse("Sign in failed."));
+                .body(new BaseResponse("Incorrect username or password."));
         }
 
-        var principal = authentication.getPrincipal();
-        if (principal instanceof SecurityUser securityUser) {
-            var context = securityContextHolderStrategy.createEmptyContext();
-            context.setAuthentication(authentication);
-            securityContextHolderStrategy.setContext(context);
-            securityContextRepository.saveContext(context, request, response);
-
-            var user = new PublicUser(securityUser.getId(), securityUser.getUsername());
-            var signInResponse = new SignInResponse("Sign in success.", user);
-            return new ResponseEntity<>(signInResponse, HttpStatus.OK);
-        } else {
+        var user = this.userRepository.findByEmail(signInRequest.username());
+        if (user.isEmpty()) {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(new BaseResponse("Sign in failed."));
+                .body(new BaseResponse("Incorrect username or password."));
         }
+
+        var u = user.get();
+        var publicUser = new PublicUser(u.getId(), u.getEmail());
+
+        var context = securityContextHolderStrategy.createEmptyContext();
+        context.setAuthentication(authentication);
+        securityContextHolderStrategy.setContext(context);
+        securityContextRepository.saveContext(context, request, response);
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(new SignInResponse("Sign in success.", publicUser));
     }
 
     @PostMapping("/signup")
@@ -75,7 +79,7 @@ public class AuthController {
 
     @GetMapping("/user")
     public ResponseEntity<CurrentUserResponse> getCurrentUser(Authentication authentication) {
-        if (null == authentication || !(authentication.getPrincipal() instanceof SecurityUser securityUser)) {
+        if (null == authentication || !(authentication.getPrincipal() instanceof UsernameAndPasswordUser usernameAndPasswordUser)) {
             return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(new CurrentUserResponse("Retrieved current user."));
@@ -86,7 +90,7 @@ public class AuthController {
             .body(
                 new CurrentUserResponse(
                     "Retrieved current user.",
-                    new PublicUser(securityUser.getId(), securityUser.getUsername())
+                    new PublicUser(usernameAndPasswordUser.getId(), usernameAndPasswordUser.getUsername())
                 )
             );
     }

@@ -61,7 +61,7 @@ public class SecurityConfig {
             }
 
             var u = user.get();
-            return new SecurityUser(
+            return new UsernameAndPasswordUser(
                 u.getId(),
                 u.getEmail(),
                 u.getPassword(),
