@@ -11,6 +11,7 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -60,7 +61,14 @@ public class SecurityConfig {
             }
 
             var u = user.get();
-            return new SecurityUser(u.getId(), u.getEmail(), u.getPassword(), u.getRoles());
+            return new SecurityUser(
+                u.getId(),
+                u.getEmail(),
+                u.getPassword(),
+                u.getRoles().stream().map(
+                    role -> (GrantedAuthority) () -> "ROLE_" + role.getName().toUpperCase()
+                ).toList()
+            );
         });
 
         return new ProviderManager(provider);

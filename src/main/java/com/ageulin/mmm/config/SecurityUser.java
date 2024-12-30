@@ -8,20 +8,22 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
 public class SecurityUser implements UserDetails, CredentialsContainer {
+    // Spring Session serializes the fields we have here when creating a session,
+    // so make sure that all fields defined here are easily serializable
+    // (e.g. don't add a field here that points to a class with Spring Data JPA relations).
     @Getter
     private UUID id;
     private String username;
     private String password;
-    private List<Role> roles;
+    private Collection<? extends GrantedAuthority> authorities;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.roles.stream().map(role -> (GrantedAuthority) () -> "ROLE_" + role.getName().toUpperCase()).toList();
+        return this.authorities;
     }
 
     @Override
