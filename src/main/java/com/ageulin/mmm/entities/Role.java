@@ -1,12 +1,15 @@
 package com.ageulin.mmm.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.List;
 
-@Entity
 @Data
+@Entity
 @Table(name = "roles")
 public class Role {
     @Id
@@ -16,6 +19,9 @@ public class Role {
     @Column(nullable = false)
     private String name;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToMany(mappedBy = "roles")
     private List<User> users;
 }
