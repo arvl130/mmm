@@ -34,3 +34,4 @@ build/
 
 ### SAM CLI ###
 .aws-sam
+samconfig.toml

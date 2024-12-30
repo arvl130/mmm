@@ -7,6 +7,14 @@ Globals:
     # API Gateway regional endpoints
     EndpointConfiguration: REGIONAL
 
+Parameters:
+  DatabaseUrl:
+    Type: String
+  DatabaseUser:
+    Type: String
+  DatabasePassword:
+    Type: String
+
 Resources:
   MmmFunction:
     Type: AWS::Serverless::Function
@@ -17,6 +25,11 @@ Resources:
       MemorySize: 1512
       Policies: AWSLambdaBasicExecutionRole
       Timeout: 60
+      Environment:
+        Variables:
+          DATABASE_URL: !Ref DatabaseUrl
+          DATABASE_USER: !Ref DatabaseUser
+          DATABASE_PASS: !Ref DatabasePassword
       Events:
         HttpApiEvent:
           Type: HttpApi
