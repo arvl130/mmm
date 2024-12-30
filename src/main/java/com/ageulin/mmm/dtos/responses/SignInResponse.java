@@ -1,10 +1,14 @@
 package com.ageulin.mmm.dtos.responses;
 
-import lombok.AllArgsConstructor;
+import com.ageulin.mmm.dtos.PublicUser;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
-public class SignInResponse {
-    private final String message;
+public class SignInResponse extends BaseResponse {
+    private final PublicUser result;
+
+    public SignInResponse(String message, PublicUser publicUser) {
+        super(message);
+        this.result = publicUser;
+    }
 }

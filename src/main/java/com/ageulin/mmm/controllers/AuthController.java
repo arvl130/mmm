@@ -3,10 +3,7 @@ package com.ageulin.mmm.controllers;
 import com.ageulin.mmm.config.SecurityUser;
 import com.ageulin.mmm.dtos.PublicUser;
 import com.ageulin.mmm.dtos.requests.SignInRequest;
-import com.ageulin.mmm.dtos.responses.CurrentUserResponse;
-import com.ageulin.mmm.dtos.responses.SignInResponse;
-import com.ageulin.mmm.dtos.responses.SignInSuccessResponse;
-import com.ageulin.mmm.dtos.responses.SignUpResponse;
+import com.ageulin.mmm.dtos.responses.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
@@ -33,7 +30,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/signin")
-    public ResponseEntity<SignInResponse> signIn(
+    public ResponseEntity<BaseResponse> signIn(
         @RequestBody SignInRequest signInRequest,
         HttpServletRequest request,
         HttpServletResponse response
@@ -46,9 +43,10 @@ public class AuthController {
 
         var authentication = authenticationManager.authenticate(token);
         if (!authentication.isAuthenticated()) {
-            var signInResponse = new SignInResponse("Sign in failed.");
 
-            return new ResponseEntity<>(signInResponse, HttpStatus.BAD_REQUEST);
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new BaseResponse("Sign in failed."));
         }
 
         var principal = authentication.getPrincipal();
@@ -59,28 +57,28 @@ public class AuthController {
             securityContextRepository.saveContext(context, request, response);
 
             var user = new PublicUser(securityUser.getId(), securityUser.getUsername());
-            var signInResponse = new SignInSuccessResponse("Sign in success.", user);
+            var signInResponse = new SignInResponse("Sign in success.", user);
             return new ResponseEntity<>(signInResponse, HttpStatus.OK);
         } else {
-            var signInResponse = new SignInResponse("Sign in failed.");
-
-            return new ResponseEntity<>(signInResponse, HttpStatus.BAD_REQUEST);
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new BaseResponse("Sign in failed."));
         }
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResponse> signUp() {
-        var response = new SignUpResponse("Sign up success.");
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<BaseResponse> signUp() {
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(new BaseResponse("Sign up success."));
     }
 
     @GetMapping("/user")
-    public ResponseEntity<CurrentUserResponse> getCurrentUser(Authentication authentication) {
+    public ResponseEntity<BaseResponse> getCurrentUser(Authentication authentication) {
         if (null == authentication) {
-            var response = new CurrentUserResponse("Retrieved current user.", null);
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new BaseResponse("Retrieved current user."));
         } else {
             if (authentication.getPrincipal() instanceof SecurityUser securityUser) {
                 var response = new CurrentUserResponse(
@@ -88,11 +86,13 @@ public class AuthController {
                     new PublicUser(securityUser.getId(), securityUser.getUsername())
                 );
 
-                return new ResponseEntity<>(response, HttpStatus.OK);
+                return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(response);
             } else {
-                var response = new CurrentUserResponse("Retrieved current user.", null);
-
-                return new ResponseEntity<>(response, HttpStatus.OK);
+                return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(new BaseResponse("Retrieved current user."));
             }
         }
     }

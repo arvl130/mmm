@@ -1,11 +1,8 @@
 package com.ageulin.mmm.config;
 
-import com.ageulin.mmm.dtos.responses.SignOutResponse;
+import com.ageulin.mmm.dtos.responses.BaseResponse;
 import com.ageulin.mmm.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -14,14 +11,9 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
-import java.io.IOException;
 
 @Configuration
 public class SecurityConfig {
@@ -32,7 +24,7 @@ public class SecurityConfig {
             .logout(configure -> configure
                 .logoutUrl("/api/v1/auth/signout")
                 .logoutSuccessHandler((request, response, authentication) -> {
-                    var signOutResponse = new SignOutResponse("Sign out success.");
+                    var signOutResponse = new BaseResponse("Sign out success.");
                     var objectMapper = new ObjectMapper();
                     var writer = response.getWriter();
                     var json = objectMapper.writeValueAsString(signOutResponse);
