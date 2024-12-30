@@ -74,26 +74,20 @@ public class AuthController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<BaseResponse> getCurrentUser(Authentication authentication) {
-        if (null == authentication) {
+    public ResponseEntity<CurrentUserResponse> getCurrentUser(Authentication authentication) {
+        if (null == authentication || !(authentication.getPrincipal() instanceof SecurityUser securityUser)) {
             return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(new BaseResponse("Retrieved current user."));
-        } else {
-            if (authentication.getPrincipal() instanceof SecurityUser securityUser) {
-                var response = new CurrentUserResponse(
+                .body(new CurrentUserResponse("Retrieved current user."));
+        }
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(
+                new CurrentUserResponse(
                     "Retrieved current user.",
                     new PublicUser(securityUser.getId(), securityUser.getUsername())
-                );
-
-                return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(response);
-            } else {
-                return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(new BaseResponse("Retrieved current user."));
-            }
-        }
+                )
+            );
     }
 }
