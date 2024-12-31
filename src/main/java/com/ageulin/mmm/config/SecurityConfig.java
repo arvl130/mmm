@@ -12,8 +12,10 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.security.web.authentication.SpringSessionRememberMeServices;
 
 
 @Configuration
@@ -37,6 +39,9 @@ public class SecurityConfig {
                     writer.flush();
                 })
             )
+            .rememberMe(configure -> configure
+                .rememberMeServices(rememberMeServices())
+            )
             .authorizeHttpRequests(authorize -> authorize
                  .requestMatchers(
                      "/api/v1/memes",
@@ -49,12 +54,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(UserRepository userRepository) {
-        var provider = new DaoAuthenticationProvider();
+    public SpringSessionRememberMeServices rememberMeServices() {
+        var rememberMeServices = new SpringSessionRememberMeServices();
+        rememberMeServices.setAlwaysRemember(true);
 
-        // We can define this as a bean, so that it can be injected in other places,
-        // but for now we only use it here, so there's no need to do that.
-        provider.setUserDetailsService(username -> {
+        return rememberMeServices;
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService(UserRepository userRepository) {
+        return username -> {
             var user = userRepository.findByEmail(username);
             if (user.isEmpty()) {
                 throw new UsernameNotFoundException("Incorrect username or password.");
@@ -69,7 +78,16 @@ public class SecurityConfig {
                     role -> (GrantedAuthority) () -> "ROLE_" + role.getName().toUpperCase()
                 ).toList()
             );
-        });
+        };
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService) {
+        var provider = new DaoAuthenticationProvider();
+
+        // We can define this as a bean, so that it can be injected in other places,
+        // but for now we only use it here, so there's no need to do that.
+        provider.setUserDetailsService(userDetailsService);
 
         return new ProviderManager(provider);
     }
