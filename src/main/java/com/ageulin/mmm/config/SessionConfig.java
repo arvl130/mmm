@@ -22,9 +22,9 @@ public class SessionConfig {
     @Bean
     public CookieSerializer cookieSerializer() {
         var serializer = new DefaultCookieSerializer();
-        var THIRTY_DAYS = 30 * 24 * 60 * 60;
+        var SEVEN_DAYS = 7 * 24 * 60 * 60;
 
-        serializer.setCookieMaxAge(THIRTY_DAYS);
+        serializer.setCookieMaxAge(SEVEN_DAYS);
         return serializer;
     }
 }
