@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.session.config.SessionRepositoryCustomizer;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
 
 @Configuration
 public class SessionConfig {
@@ -15,5 +17,14 @@ public class SessionConfig {
             // name we specify is expanded to [name]_attributes under the hood,
             // so I've opted not to pluralize it.
             .setTableName("session");
+    }
+
+    @Bean
+    public CookieSerializer cookieSerializer() {
+        var serializer = new DefaultCookieSerializer();
+        var THIRTY_DAYS = 30 * 24 * 60 * 60;
+
+        serializer.setCookieMaxAge(THIRTY_DAYS);
+        return serializer;
     }
 }
