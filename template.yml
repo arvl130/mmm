@@ -14,6 +14,8 @@ Parameters:
     Type: String
   AWSS3BucketBaseUrl:
     Type: String
+  S3AccessPolicyArn:
+    Type: String
 
 Resources:
   MmmFunction:
@@ -23,7 +25,9 @@ Resources:
       Runtime: java21
       CodeUri: .
       MemorySize: 1512
-      Policies: AWSLambdaBasicExecutionRole
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - !Ref S3AccessPolicyArn
       Timeout: 60
       Environment:
         Variables:
