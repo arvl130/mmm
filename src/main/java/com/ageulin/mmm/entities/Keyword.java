@@ -17,7 +17,7 @@ public class Keyword {
     @GeneratedValue
     private BigInteger id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
     @ToString.Exclude

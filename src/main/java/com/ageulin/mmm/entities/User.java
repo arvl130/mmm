@@ -20,7 +20,7 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     // We never want this to be serialized (by Jackson or Lombok)
