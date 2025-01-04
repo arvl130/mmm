@@ -14,12 +14,6 @@ Parameters:
     Type: String
   DatabasePassword:
     Type: String
-  AWSAccessKeyID:
-    Type: String
-  AWSAccessKeySecret:
-    Type: String
-  AWSRegion:
-    Type: String
   AWSS3Bucket:
     Type: String
   AWSS3BucketBaseUrl:
@@ -40,9 +34,6 @@ Resources:
           DATABASE_URL: !Ref DatabaseUrl
           DATABASE_USER: !Ref DatabaseUser
           DATABASE_PASS: !Ref DatabasePassword
-          AWS_ACCESS_KEY_ID: !Ref AWSAccessKeyID
-          AWS_ACCESS_KEY_SECRET: !Ref AWSAccessKeySecret
-          AWS_REGION: !Ref AWSRegion
           AWS_S3_BUCKET: !Ref AWSS3Bucket
           AWS_S3_BUCKET_BASE_URL: !Ref AWSS3BucketBaseUrl
       Events:
