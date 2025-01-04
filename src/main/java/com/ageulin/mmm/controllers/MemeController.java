@@ -111,7 +111,7 @@ public class MemeController {
                     "Retrieved meme.",
                     new PublicMeme(
                         meme.getId(),
-                        this.AWS_S3_BUCKET_BASE_URL + "/" + meme.getId()
+                        this.AWS_S3_BUCKET_BASE_URL + "/memes/" + meme.getId()
                     )
                 )
             );
@@ -141,7 +141,7 @@ public class MemeController {
                     "Updated meme.",
                     new PublicMeme(
                         savedMeme.getId(),
-                        this.AWS_S3_BUCKET_BASE_URL + "/" + savedMeme.getId()
+                        this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId()
                     )
                 )
             );
