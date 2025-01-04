@@ -14,7 +14,7 @@ import java.util.List;
 @Table(name = "keywords")
 public class Keyword {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private BigInteger id;
 
     @Column(nullable = false, unique = true)
