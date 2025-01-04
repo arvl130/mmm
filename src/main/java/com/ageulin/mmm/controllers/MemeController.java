@@ -202,6 +202,14 @@ public class MemeController {
         this.memeRepository.findByIdAndUserId(memeId, securityUser.getId())
             .orElseThrow(() -> new HttpNotFoundException("No such meme."));
 
+        try (var s3Client = S3Client.builder().build()) {
+            s3Client.deleteObject(builder -> builder
+                .bucket(this.AWS_S3_BUCKET)
+                .key("memes/" + memeId)
+                .build()
+            );
+        }
+
         this.memeRepository.deleteById(memeId);
 
         return ResponseEntity
