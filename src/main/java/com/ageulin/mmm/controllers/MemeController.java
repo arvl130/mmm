@@ -33,13 +33,11 @@ public class MemeController {
         @AuthenticationPrincipal SecurityUser securityUser,
         @RequestBody StoreMemeRequest storeMemeRequest
     ) {
-        var user = this.userRepository.findById(securityUser.getId());
-        if (user.isEmpty()) {
-            throw new HttpPreconditionFailedException("User has no details.");
-        }
+        var user = this.userRepository.findById(securityUser.getId())
+            .orElseThrow(() -> new HttpPreconditionFailedException("User has no details."));
 
         var meme = Meme.builder()
-            .user(user.get())
+            .user(user)
             .imgUrl(storeMemeRequest.imgUrl())
             .build();
 
@@ -66,14 +64,12 @@ public class MemeController {
         @AuthenticationPrincipal SecurityUser securityUser,
         @PathVariable UUID memeId
     ) {
-        var meme = this.memeRepository.findByIdAndUserId(memeId, securityUser.getId());
-        if (meme.isEmpty()) {
-            throw new HttpNotFoundException("No such meme.");
-        }
+        var meme = this.memeRepository.findByIdAndUserId(memeId, securityUser.getId())
+            .orElseThrow(() -> new HttpNotFoundException("No such meme."));
 
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(new ViewMemeResponse("Retrieved meme.", meme.get()));
+            .body(new ViewMemeResponse("Retrieved meme.", meme));
     }
 
     @Transactional
@@ -83,14 +79,12 @@ public class MemeController {
         @PathVariable UUID memeId,
         @RequestBody UpdateMemeRequest updateMemeRequest
     ) {
-        var existingMeme = this.memeRepository.findByIdAndUserId(memeId, securityUser.getId());
-        if (existingMeme.isEmpty()) {
-            throw new HttpNotFoundException("No such meme.");
-        }
+        var existingMeme = this.memeRepository.findByIdAndUserId(memeId, securityUser.getId())
+            .orElseThrow(() -> new HttpNotFoundException("No such meme."));
 
         var modifiedMeme = Meme.builder()
-            .id(existingMeme.get().getId())
-            .user(existingMeme.get().getUser())
+            .id(existingMeme.getId())
+            .user(existingMeme.getUser())
             .imgUrl(updateMemeRequest.imgUrl())
             .build();
 
@@ -107,11 +101,8 @@ public class MemeController {
         @AuthenticationPrincipal SecurityUser securityUser,
         @PathVariable UUID memeId
     ) {
-        var meme = this.memeRepository.findByIdAndUserId(memeId, securityUser.getId());
-        if (meme.isEmpty()) {
-            var response = new BaseResponse("No such meme.");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
+        this.memeRepository.findByIdAndUserId(memeId, securityUser.getId())
+            .orElseThrow(() -> new HttpNotFoundException("No such meme."));
 
         this.memeRepository.deleteById(memeId);
 

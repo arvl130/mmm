@@ -4,6 +4,7 @@ import com.ageulin.mmm.config.UsernameAndPasswordUser;
 import com.ageulin.mmm.dtos.PublicUser;
 import com.ageulin.mmm.dtos.requests.SignInRequest;
 import com.ageulin.mmm.dtos.responses.*;
+import com.ageulin.mmm.exceptions.IncorrectUsernameOrPasswordException;
 import com.ageulin.mmm.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -47,20 +48,13 @@ public class AuthController {
 
         var authentication = authenticationManager.authenticate(token);
         if (!authentication.isAuthenticated()) {
-            return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new BaseResponse("Incorrect username or password."));
+            throw new IncorrectUsernameOrPasswordException();
         }
 
-        var user = this.userRepository.findByEmail(signInRequest.username());
-        if (user.isEmpty()) {
-            return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new BaseResponse("Incorrect username or password."));
-        }
+        var user = this.userRepository.findByEmail(signInRequest.username())
+            .orElseThrow(IncorrectUsernameOrPasswordException::new);
 
-        var u = user.get();
-        var publicUser = new PublicUser(u.getId(), u.getEmail());
+        var publicUser = new PublicUser(user.getId(), user.getEmail());
 
         var context = securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(authentication);
@@ -93,8 +87,20 @@ public class AuthController {
             .body(
                 new CurrentUserResponse(
                     "Retrieved current user.",
-                    new PublicUser(usernameAndPasswordUser.getId(), usernameAndPasswordUser.getUsername())
+                    new PublicUser(
+                        usernameAndPasswordUser.getId(),
+                        usernameAndPasswordUser.getUsername()
+                    )
                 )
             );
+    }
+
+    @ExceptionHandler(IncorrectUsernameOrPasswordException.class)
+    public ResponseEntity<BaseResponse> handleIncorrectUsernameOrPasswordError(
+        IncorrectUsernameOrPasswordException ex
+    ) {
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(new BaseResponse(ex.getMessage()));
     }
 }
