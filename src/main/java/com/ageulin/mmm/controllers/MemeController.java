@@ -50,7 +50,7 @@ public class MemeController {
 
         if (this.memeRepository.existsById(storeMemeRequest.id())) {
             throw new HttpPreconditionFailedException("Meme already exists.");
-        };
+        }
 
         try (var s3Client = S3Client.builder().build()) {
             s3Client.headObject(builder -> builder
