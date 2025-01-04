@@ -1,6 +1,11 @@
 package com.ageulin.mmm.dtos.requests;
 
+import jakarta.validation.constraints.NotNull;
+
+import java.util.Set;
+
 public record UpdateMemeRequest(
-    // There are no fields that we can update at the moment.
+    @NotNull
+    Set<String> keywords
 ) {
 }

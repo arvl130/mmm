@@ -154,15 +154,25 @@ public class MemeController {
     public ResponseEntity<ViewMemeResponse> update(
         @AuthenticationPrincipal SecurityUser securityUser,
         @PathVariable UUID memeId,
-        @RequestBody UpdateMemeRequest updateMemeRequest
+        @Valid @RequestBody UpdateMemeRequest updateMemeRequest
     ) {
         var existingMeme = this.memeRepository.findByIdAndUserId(memeId, securityUser.getId())
             .orElseThrow(() -> new HttpNotFoundException("No such meme."));
 
+        var keywords = updateMemeRequest
+            .keywords()
+            .stream()
+            .map(name -> this.keywordRepository
+                .findByName(name)
+                .orElseGet(() -> this.keywordRepository
+                    .save(Keyword.builder().name(name).build())
+                )
+            ).toList();
+
         var modifiedMeme = Meme.builder()
             .id(existingMeme.getId())
             .user(existingMeme.getUser())
-            .keywords(existingMeme.getKeywords())
+            .keywords(keywords)
             .build();
 
         var savedMeme = this.memeRepository.save(modifiedMeme);
