@@ -142,6 +142,7 @@ public class MemeController {
         var modifiedMeme = Meme.builder()
             .id(existingMeme.getId())
             .user(existingMeme.getUser())
+            .keywords(existingMeme.getKeywords())
             .build();
 
         var savedMeme = this.memeRepository.save(modifiedMeme);
