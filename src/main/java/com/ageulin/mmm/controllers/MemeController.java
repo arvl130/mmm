@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -65,6 +66,7 @@ public class MemeController {
         var meme = Meme.builder()
             .id(storeMemeRequest.id())
             .user(user)
+            .keywords(List.of())
             .build();
 
         var savedMeme = this.memeRepository.save(meme);
