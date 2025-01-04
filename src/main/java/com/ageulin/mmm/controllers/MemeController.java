@@ -7,10 +7,12 @@ import com.ageulin.mmm.dtos.requests.UpdateMemeRequest;
 import com.ageulin.mmm.dtos.responses.BaseResponse;
 import com.ageulin.mmm.dtos.responses.IndexMemeResponse;
 import com.ageulin.mmm.dtos.responses.ViewMemeResponse;
+import com.ageulin.mmm.entities.Keyword;
 import com.ageulin.mmm.entities.Meme;
 import com.ageulin.mmm.exceptions.HttpNotFoundException;
 import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.mappers.KeywordMapper;
+import com.ageulin.mmm.repositories.KeywordRepository;
 import com.ageulin.mmm.repositories.MemeRepository;
 import com.ageulin.mmm.repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -22,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -32,12 +33,19 @@ public class MemeController {
     private final String AWS_S3_BUCKET_BASE_URL;
     private final MemeRepository memeRepository;
     private final UserRepository userRepository;
+    private final KeywordRepository keywordRepository;
 
-    public MemeController(MemeRepository memeRepository, UserRepository userRepository) {
+
+    public MemeController(
+        MemeRepository memeRepository,
+        UserRepository userRepository,
+        KeywordRepository keywordRepository
+    ) {
         this.AWS_S3_BUCKET = System.getenv("AWS_S3_BUCKET");
         this.AWS_S3_BUCKET_BASE_URL = System.getenv("AWS_S3_BUCKET_BASE_URL");
         this.memeRepository = memeRepository;
         this.userRepository = userRepository;
+        this.keywordRepository = keywordRepository;
     }
 
     @Transactional
@@ -63,10 +71,22 @@ public class MemeController {
             throw new HttpPreconditionFailedException("No image was uploaded.");
         }
 
+        var keywords = storeMemeRequest
+            .keywords()
+            .stream()
+            .map(name -> this.keywordRepository
+                // Get item.
+                .findByName(name)
+                // If not present, then create it.
+                .orElseGet(() -> this.keywordRepository
+                    .save(Keyword.builder().name(name).build())
+                )
+            ).toList();
+
         var meme = Meme.builder()
             .id(storeMemeRequest.id())
             .user(user)
-            .keywords(List.of())
+            .keywords(keywords)
             .build();
 
         var savedMeme = this.memeRepository.save(meme);
