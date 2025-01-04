@@ -7,5 +7,4 @@ region = "ap-southeast-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
-parameter_overrides = "
-DatabaseUrl=\"YOUR_DATABASE_URL\" DatabaseUser=\"YOUR_DATABASE_USER\" DatabasePassword=\"YOUR_DATABASE_PASSWORD\" AWSS3Bucket=\"YOUR_AWS_S3_BUCKET\" AWSS3BucketBaseUrl=\"YOUR_AWS_S3_BUCKET_BASE_URL\""
+parameter_overrides = "DatabaseUrl=\"YOUR_DATABASE_URL\" AWSS3Bucket=\"YOUR_AWS_S3_BUCKET\" AWSS3BucketBaseUrl=\"YOUR_AWS_S3_BUCKET_BASE_URL\""

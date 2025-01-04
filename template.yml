@@ -10,10 +10,6 @@ Globals:
 Parameters:
   DatabaseUrl:
     Type: String
-  DatabaseUser:
-    Type: String
-  DatabasePassword:
-    Type: String
   AWSS3Bucket:
     Type: String
   AWSS3BucketBaseUrl:
@@ -32,8 +28,6 @@ Resources:
       Environment:
         Variables:
           DATABASE_URL: !Ref DatabaseUrl
-          DATABASE_USER: !Ref DatabaseUser
-          DATABASE_PASS: !Ref DatabasePassword
           AWS_S3_BUCKET: !Ref AWSS3Bucket
           AWS_S3_BUCKET_BASE_URL: !Ref AWSS3BucketBaseUrl
       Events:
