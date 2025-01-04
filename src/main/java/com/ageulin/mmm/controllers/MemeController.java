@@ -10,6 +10,7 @@ import com.ageulin.mmm.dtos.responses.ViewMemeResponse;
 import com.ageulin.mmm.entities.Meme;
 import com.ageulin.mmm.exceptions.HttpNotFoundException;
 import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
+import com.ageulin.mmm.mappers.KeywordMapper;
 import com.ageulin.mmm.repositories.MemeRepository;
 import com.ageulin.mmm.repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -69,7 +70,10 @@ public class MemeController {
         var savedMeme = this.memeRepository.save(meme);
         var publicMeme = new PublicMeme(
             savedMeme.getId(),
-            this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId()
+            this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId(),
+            savedMeme.getKeywords()
+                .stream()
+                .map(KeywordMapper::toPublic).toList()
         );
 
         return ResponseEntity
@@ -87,7 +91,10 @@ public class MemeController {
             .map(meme ->
                 new PublicMeme(
                     meme.getId(),
-                    this.AWS_S3_BUCKET_BASE_URL + "/memes/" + meme.getId()
+                    this.AWS_S3_BUCKET_BASE_URL + "/memes/" + meme.getId(),
+                    meme.getKeywords()
+                        .stream()
+                        .map(KeywordMapper::toPublic).toList()
                 )
             ).toList();
 
@@ -111,7 +118,10 @@ public class MemeController {
                     "Retrieved meme.",
                     new PublicMeme(
                         meme.getId(),
-                        this.AWS_S3_BUCKET_BASE_URL + "/memes/" + meme.getId()
+                        this.AWS_S3_BUCKET_BASE_URL + "/memes/" + meme.getId(),
+                        meme.getKeywords()
+                            .stream()
+                            .map(KeywordMapper::toPublic).toList()
                     )
                 )
             );
@@ -141,7 +151,10 @@ public class MemeController {
                     "Updated meme.",
                     new PublicMeme(
                         savedMeme.getId(),
-                        this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId()
+                        this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId(),
+                        savedMeme.getKeywords()
+                            .stream()
+                            .map(KeywordMapper::toPublic).toList()
                     )
                 )
             );

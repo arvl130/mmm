@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -27,4 +28,14 @@ public class Meme {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToMany
+    @JoinTable(
+        name = "meme_keywords",
+        joinColumns = @JoinColumn(name = "meme_id", referencedColumnName = "id"),
+        inverseJoinColumns = @JoinColumn(name = "keyword_id", referencedColumnName = "id")
+    )
+    private List<Keyword> keywords;
 }
