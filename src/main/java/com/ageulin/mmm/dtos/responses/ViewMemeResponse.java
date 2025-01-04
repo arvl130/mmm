@@ -1,15 +1,15 @@
 package com.ageulin.mmm.dtos.responses;
 
-import com.ageulin.mmm.entities.Meme;
+import com.ageulin.mmm.dtos.PublicMeme;
 import lombok.Getter;
 
 @Getter
 public class ViewMemeResponse extends BaseResponse {
-    private final Meme result;
+    private final PublicMeme result;
 
-    public ViewMemeResponse(String message, Meme meme) {
+    public ViewMemeResponse(String message, PublicMeme publicMeme) {
         super(message);
 
-        this.result = meme;
+        this.result = publicMeme;
     }
 }

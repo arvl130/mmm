@@ -16,11 +16,7 @@ import java.util.UUID;
 @Table(name = "memes")
 public class Meme {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
-    @Column(nullable = false, name = "img_url")
-    private String imgUrl;
 
     // Exclude relations when serializing to avoid infinite recursion.
     //

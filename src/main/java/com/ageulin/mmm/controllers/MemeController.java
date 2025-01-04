@@ -1,6 +1,7 @@
 package com.ageulin.mmm.controllers;
 
 import com.ageulin.mmm.config.SecurityUser;
+import com.ageulin.mmm.dtos.PublicMeme;
 import com.ageulin.mmm.dtos.requests.StoreMemeRequest;
 import com.ageulin.mmm.dtos.requests.UpdateMemeRequest;
 import com.ageulin.mmm.dtos.responses.BaseResponse;
@@ -12,40 +13,69 @@ import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.repositories.MemeRepository;
 import com.ageulin.mmm.repositories.UserRepository;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/memes")
-@AllArgsConstructor
 public class MemeController {
-    private MemeRepository memeRepository;
-    private UserRepository userRepository;
+    private final String AWS_S3_BUCKET;
+    private final String AWS_S3_BUCKET_BASE_URL;
+    private final MemeRepository memeRepository;
+    private final UserRepository userRepository;
+
+    public MemeController(MemeRepository memeRepository, UserRepository userRepository) {
+        this.AWS_S3_BUCKET = System.getenv("AWS_S3_BUCKET");
+        this.AWS_S3_BUCKET_BASE_URL = System.getenv("AWS_S3_BUCKET_BASE_URL");
+        this.memeRepository = memeRepository;
+        this.userRepository = userRepository;
+    }
 
     @Transactional
     @PostMapping
     public ResponseEntity<ViewMemeResponse> store(
         @AuthenticationPrincipal SecurityUser securityUser,
-        @RequestBody StoreMemeRequest storeMemeRequest
+        @Valid @RequestBody StoreMemeRequest storeMemeRequest
     ) {
         var user = this.userRepository.findById(securityUser.getId())
             .orElseThrow(() -> new HttpPreconditionFailedException("User has no details."));
 
+        if (this.memeRepository.existsById(storeMemeRequest.id())) {
+            throw new HttpPreconditionFailedException("Meme already exists.");
+        };
+
+        try (var s3Client = S3Client.builder().build()) {
+            s3Client.headObject(builder -> builder
+                .bucket(this.AWS_S3_BUCKET)
+                .key("memes/" + storeMemeRequest.id())
+                .build()
+            );
+        } catch (NoSuchKeyException ignored) {
+            throw new HttpPreconditionFailedException("No image was uploaded.");
+        }
+
         var meme = Meme.builder()
+            .id(storeMemeRequest.id())
             .user(user)
-            .imgUrl(storeMemeRequest.imgUrl())
             .build();
 
         var savedMeme = this.memeRepository.save(meme);
+        var publicMeme = new PublicMeme(
+            savedMeme.getId(),
+            this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId()
+        );
 
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(new ViewMemeResponse("Created meme.", savedMeme));
+            .body(new ViewMemeResponse("Created meme.", publicMeme));
     }
 
     @GetMapping
@@ -53,10 +83,18 @@ public class MemeController {
         @AuthenticationPrincipal SecurityUser securityUser
     ) {
         var memes = this.memeRepository.findByUserId(securityUser.getId());
+        var publicMemes = memes
+            .stream()
+            .map(meme ->
+                new PublicMeme(
+                    meme.getId(),
+                    this.AWS_S3_BUCKET_BASE_URL + "/memes/" + meme.getId()
+                )
+            ).toList();
 
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(new IndexMemeResponse("Retrieved memes.", memes));
+            .body(new IndexMemeResponse("Retrieved memes.", publicMemes));
     }
 
     @GetMapping("/{memeId}")
@@ -69,7 +107,15 @@ public class MemeController {
 
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(new ViewMemeResponse("Retrieved meme.", meme));
+            .body(
+                new ViewMemeResponse(
+                    "Retrieved meme.",
+                    new PublicMeme(
+                        meme.getId(),
+                        this.AWS_S3_BUCKET_BASE_URL + "/" + meme.getId()
+                    )
+                )
+            );
     }
 
     @Transactional
@@ -85,14 +131,21 @@ public class MemeController {
         var modifiedMeme = Meme.builder()
             .id(existingMeme.getId())
             .user(existingMeme.getUser())
-            .imgUrl(updateMemeRequest.imgUrl())
             .build();
 
         var savedMeme = this.memeRepository.save(modifiedMeme);
 
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(new ViewMemeResponse("Updated meme.", savedMeme));
+            .body(
+                new ViewMemeResponse(
+                    "Updated meme.",
+                    new PublicMeme(
+                        savedMeme.getId(),
+                        this.AWS_S3_BUCKET_BASE_URL + "/" + savedMeme.getId()
+                    )
+                )
+            );
     }
 
     @Transactional
