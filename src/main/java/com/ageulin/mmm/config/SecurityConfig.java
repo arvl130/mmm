@@ -21,7 +21,7 @@ import org.springframework.session.security.web.authentication.SpringSessionReme
 @Configuration
 public class SecurityConfig {
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(Customizer.withDefaults())
             .logout(configure -> configure
