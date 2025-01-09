@@ -1,6 +1,7 @@
 package com.ageulin.mmm.controllers;
 
 import com.ageulin.mmm.dtos.responses.KeywordSuggestionResponse;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 public class KeywordController {
     @PostMapping("/suggestions")
     public ResponseEntity<KeywordSuggestionResponse> getSuggestions(
-        @RequestParam("file") MultipartFile file
+        @NotNull @RequestParam("file") MultipartFile file
     ) {
         if (file.isEmpty()) {
             throw new ServerWebInputException("Input file is required.");
