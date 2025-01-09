@@ -56,13 +56,13 @@ public class KeywordController {
                     .build();
 
                 ConverseResponse response = client.converse(request -> request
-                        .modelId(System.getenv("AWS_BEDROCK_MODEL_ID"))
-                        .system(systemMessage)
-                        .messages(imageMessage)
-                        .inferenceConfig(config -> config
-                                .maxTokens(512)
-                                .temperature(0.5F)
-                                .topP(0.9F)));
+                    .modelId(System.getenv("AWS_BEDROCK_MODEL_ID"))
+                    .system(systemMessage)
+                    .messages(imageMessage)
+                    .inferenceConfig(config -> config
+                        .maxTokens(512)
+                        .temperature(0.5F)
+                        .topP(0.9F)));
 
                 var responseText = response.output().message().content().getFirst().text();
                 var keywords = Arrays
@@ -75,7 +75,7 @@ public class KeywordController {
                     .body(new KeywordSuggestionResponse(
                         "Received reply from AI model.",
                         censorAWSAccountNumber(
-                                System.getenv("AWS_BEDROCK_MODEL_ID")
+                            System.getenv("AWS_BEDROCK_MODEL_ID")
                         ),
                         prompt,
                         file.getContentType(),
