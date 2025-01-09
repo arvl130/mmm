@@ -12,7 +12,9 @@ import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/keywords")
@@ -28,12 +30,14 @@ public class KeywordController {
             );
         }
 
-        var prompt =
-            """
-            You are good at describing images in JSON format. \
-            For example: ['frog', 'green', 'sad', 'large eyes']
+        var prompt = """
+         You are an expert at analyzing images.
+         Extract the most relevant keywords that best represent the image’s content.
+        
+         Respond with a comma-separated list of keywords, with no extra text.
+         Example: foo, bar, baz""";
 
-            Describe the following image in given format.""";
+        var systemMessage = SystemContentBlock.builder().text(prompt).build();
 
         try (var client = BedrockRuntimeClient.builder().build()) {
             try {
@@ -46,20 +50,25 @@ public class KeywordController {
                     .format(ImageFormat.JPEG)
                     .build();
 
-                var message = Message.builder()
+                var imageMessage = Message.builder()
                     .content(ContentBlock.fromImage(imageBlock))
                     .role(ConversationRole.USER)
                     .build();
 
                 ConverseResponse response = client.converse(request -> request
                         .modelId(System.getenv("AWS_BEDROCK_MODEL_ID"))
-                        .messages(message)
+                        .system(systemMessage)
+                        .messages(imageMessage)
                         .inferenceConfig(config -> config
                                 .maxTokens(512)
                                 .temperature(0.5F)
                                 .topP(0.9F)));
 
                 var responseText = response.output().message().content().getFirst().text();
+                var keywords = Arrays
+                    .stream(responseText.split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
 
                 return ResponseEntity
                     .status(HttpStatus.OK)
@@ -71,7 +80,7 @@ public class KeywordController {
                         prompt,
                         file.getContentType(),
                         file.getOriginalFilename(),
-                        responseText
+                        keywords
                     ));
             } catch (IOException e) {
                 throw new RuntimeException(e);

@@ -2,6 +2,8 @@ package com.ageulin.mmm.dtos.responses;
 
 import lombok.Getter;
 
+import java.util.Set;
+
 @Getter
 public class KeywordSuggestionResponse extends BaseResponse {
     record Input(
@@ -11,7 +13,7 @@ public class KeywordSuggestionResponse extends BaseResponse {
     private final String modelId;
     private final String prompt;
     private final Input input;
-    private final String reply;
+    private final Set<String> reply;
 
     public KeywordSuggestionResponse(
             String message,
@@ -19,7 +21,7 @@ public class KeywordSuggestionResponse extends BaseResponse {
             String prompt,
             String inputType,
             String inputFilename,
-            String reply
+            Set<String> reply
     ) {
         super(message);
         this.modelId = modelId;
