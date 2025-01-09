@@ -1,6 +1,7 @@
 package com.ageulin.mmm.controllers;
 
 import com.ageulin.mmm.dtos.responses.KeywordSuggestionResponse;
+import com.ageulin.mmm.exceptions.HttpTooManyRequestsException;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -94,6 +95,8 @@ public class KeywordController {
                     ));
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } catch (ThrottlingException e) {
+                throw new HttpTooManyRequestsException();
             }
         }
     }
