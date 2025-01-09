@@ -74,6 +74,10 @@ public class KeywordController {
                 var keywords = Arrays
                     .stream(responseText.split(","))
                     .map(s -> s.trim().toLowerCase())
+                    // Sometimes, the LLM will add a period at the end of the
+                    // keyword (possibly because it is the last in the list?).
+                    // So we remove it here if that is the case.
+                    .map(s -> s.endsWith(".") ? s.substring(0, s.length() - 1) : s)
                     .collect(Collectors.toSet());
 
                 return ResponseEntity
