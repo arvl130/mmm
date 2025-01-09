@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/keywords")
 public class KeywordController {
-    @GetMapping("/suggestions")
+    @PostMapping("/suggestions")
     public ResponseEntity<KeywordSuggestionResponse> getSuggestions(
         @RequestParam("file") MultipartFile file
     ) {
