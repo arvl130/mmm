@@ -7,4 +7,4 @@ region = "ap-southeast-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
-parameter_overrides = "DatabaseUrl=\"YOUR_DATABASE_URL\" AWSS3Bucket=\"YOUR_AWS_S3_BUCKET\" AWSS3BucketBaseUrl=\"YOUR_AWS_S3_BUCKET_BASE_URL\" S3AccessPolicyArn=\"YOUR_S3_ACCESS_POLICY_ARN\""
+parameter_overrides = "DatabaseUrl=\"YOUR_DATABASE_URL\" AWSS3Bucket=\"YOUR_AWS_S3_BUCKET\" AWSS3BucketBaseUrl=\"YOUR_AWS_S3_BUCKET_BASE_URL\" S3AccessPolicyArn=\"YOUR_S3_ACCESS_POLICY_ARN\" AWSBedrockModelId=\"YOUR_AWS_BEDROCK_MODEL_ID\""

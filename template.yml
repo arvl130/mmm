@@ -16,6 +16,8 @@ Parameters:
     Type: String
   S3AccessPolicyArn:
     Type: String
+  AWSBedrockModelId:
+    Type: String
 
 Resources:
   MmmFunction:
@@ -27,6 +29,7 @@ Resources:
       MemorySize: 1512
       Policies:
         - AWSLambdaBasicExecutionRole
+        - AmazonBedrockFullAccess
         - !Ref S3AccessPolicyArn
       Timeout: 60
       Environment:
@@ -34,6 +37,7 @@ Resources:
           DATABASE_URL: !Ref DatabaseUrl
           AWS_S3_BUCKET: !Ref AWSS3Bucket
           AWS_S3_BUCKET_BASE_URL: !Ref AWSS3BucketBaseUrl
+          AWS_BEDROCK_MODEL_ID: !Ref AWSBedrockModelId
       Events:
         HttpApiEvent:
           Type: HttpApi
