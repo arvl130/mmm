@@ -73,7 +73,7 @@ public class KeywordController {
                 var responseText = response.output().message().content().getFirst().text();
                 var keywords = Arrays
                     .stream(responseText.split(","))
-                    .map(String::trim)
+                    .map(s -> s.trim().toLowerCase())
                     .collect(Collectors.toSet());
 
                 return ResponseEntity
