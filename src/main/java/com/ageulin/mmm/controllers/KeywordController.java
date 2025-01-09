@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ServerWebInputException;
 import org.springframework.web.server.UnsupportedMediaTypeStatusException;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
@@ -13,7 +14,6 @@ import software.amazon.awssdk.services.bedrockruntime.model.*;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -23,12 +23,17 @@ public class KeywordController {
     public ResponseEntity<KeywordSuggestionResponse> getSuggestions(
         @RequestParam("file") MultipartFile file
     ) {
-        var fileContentType = file.getContentType();
-        if (!isValidContentType(file) || null == fileContentType) {
-            throw new UnsupportedMediaTypeStatusException(
+        if (file.isEmpty()) {
+            throw new ServerWebInputException("Input file is required.");
+        }
+
+        var imageFormat = switch (file.getContentType()) {
+            case MediaType.IMAGE_PNG_VALUE -> ImageFormat.PNG;
+            case MediaType.IMAGE_JPEG_VALUE -> ImageFormat.JPEG;
+            case null, default -> throw new UnsupportedMediaTypeStatusException(
                 "Only JPEG and PNG files are allowed."
             );
-        }
+        };
 
         var prompt = """
          You are an expert at analyzing images.
@@ -47,7 +52,7 @@ public class KeywordController {
 
                 var imageBlock = ImageBlock.builder()
                     .source(imageSource)
-                    .format(ImageFormat.JPEG)
+                    .format(imageFormat)
                     .build();
 
                 var imageMessage = Message.builder()
@@ -102,19 +107,5 @@ public class KeywordController {
 
         // Rejoin the segments to reconstruct the censored ARN
         return String.join(":", segments);
-    }
-
-    private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
-        MediaType.IMAGE_JPEG_VALUE,
-        MediaType.IMAGE_PNG_VALUE
-    );
-
-    public static boolean isValidContentType(MultipartFile file) {
-        if (null == file || file.isEmpty()) {
-            return false;
-        }
-
-        String contentType = file.getContentType();
-        return ALLOWED_CONTENT_TYPES.contains(contentType);
     }
 }
