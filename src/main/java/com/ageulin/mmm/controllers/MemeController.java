@@ -15,6 +15,7 @@ import com.ageulin.mmm.mappers.KeywordMapper;
 import com.ageulin.mmm.repositories.KeywordRepository;
 import com.ageulin.mmm.repositories.MemeRepository;
 import com.ageulin.mmm.repositories.UserRepository;
+import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -91,6 +93,22 @@ public class MemeController {
             .build();
 
         var savedMeme = this.memeRepository.save(meme);
+        if (!keywords.isEmpty()) {
+            var searchable = String.join(
+                " ",
+                keywords
+                    .stream()
+                    .map(Keyword::getName)
+                    .collect(Collectors.toSet())
+            );
+
+            this.memeRepository.updateSearchableByIdAndUserId(
+                storeMemeRequest.id(),
+                securityUser.getId(),
+                searchable
+            );
+        }
+
         var publicMeme = new PublicMeme(
             savedMeme.getId(),
             this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId(),
@@ -107,15 +125,10 @@ public class MemeController {
     @GetMapping
     public ResponseEntity<IndexMemeResponse> index(
         @AuthenticationPrincipal SecurityUser securityUser,
-        @RequestParam(name = "q", required = false) String searchTerm
+        @RequestParam(name = "q", required = false) String searchTerm,
+        @RequestParam(name = "mode", required = false) String searchMode
     ) {
-        var memes = (null == searchTerm || "".equalsIgnoreCase(searchTerm))
-            ? this.memeRepository.findByUserId(securityUser.getId())
-            : this.memeRepository.findDistinctByUserIdAndKeywords_NameContaining(
-                securityUser.getId(),
-                searchTerm
-            );
-
+        var memes = getMemes(securityUser.getId(), searchTerm, searchMode);
         var publicMemes = memes
             .stream()
             .map(meme ->
@@ -131,6 +144,23 @@ public class MemeController {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(new IndexMemeResponse("Retrieved memes.", publicMemes));
+    }
+
+    private List<Meme> getMemes(
+        UUID userId,
+        @Nullable String searchTerm,
+        @Nullable String searchMode
+    ) {
+        if (null == searchTerm || "".equalsIgnoreCase(searchTerm)) {
+            return this.memeRepository.findByUserId(userId);
+        } else {
+            return switch (searchMode) {
+                case "FULL_TEXT" -> this.memeRepository
+                    .websearch(searchTerm);
+                case null, default -> this.memeRepository
+                    .findDistinctByUserIdAndKeywords_NameContaining(userId, searchTerm);
+            };
+        }
     }
 
     @GetMapping("/{memeId}")
