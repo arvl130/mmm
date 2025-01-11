@@ -106,9 +106,16 @@ public class MemeController {
 
     @GetMapping
     public ResponseEntity<IndexMemeResponse> index(
-        @AuthenticationPrincipal SecurityUser securityUser
+        @AuthenticationPrincipal SecurityUser securityUser,
+        @RequestParam(name = "q", required = false) String searchTerm
     ) {
-        var memes = this.memeRepository.findByUserId(securityUser.getId());
+        var memes = (null == searchTerm || "".equalsIgnoreCase(searchTerm))
+            ? this.memeRepository.findByUserId(securityUser.getId())
+            : this.memeRepository.findDistinctByUserIdAndKeywords_NameContaining(
+                securityUser.getId(),
+                searchTerm
+            );
+
         var publicMemes = memes
             .stream()
             .map(meme ->

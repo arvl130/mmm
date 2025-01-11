@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface MemeRepository extends CrudRepository<Meme, UUID> {
     List<Meme> findByUserId(UUID userId);
     Optional<Meme> findByIdAndUserId(UUID id, UUID userId);
+    List<Meme> findDistinctByUserIdAndKeywords_NameContaining(UUID userId, String name);
 }
