@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigInteger;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Builder
@@ -23,5 +24,5 @@ public class Keyword {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToMany(mappedBy = "keywords")
-    private List<Meme> memes;
+    private Set<Meme> memes = new HashSet<>();
 }

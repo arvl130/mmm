@@ -25,6 +25,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/memes")
@@ -81,7 +82,7 @@ public class MemeController {
                 .orElseGet(() -> this.keywordRepository
                     .save(Keyword.builder().name(name).build())
                 )
-            ).toList();
+            ).collect(Collectors.toSet());
 
         var meme = Meme.builder()
             .id(storeMemeRequest.id())
@@ -167,7 +168,7 @@ public class MemeController {
                 .orElseGet(() -> this.keywordRepository
                     .save(Keyword.builder().name(name).build())
                 )
-            ).toList();
+            ).collect(Collectors.toSet());
 
         var modifiedMeme = Meme.builder()
             .id(existingMeme.getId())

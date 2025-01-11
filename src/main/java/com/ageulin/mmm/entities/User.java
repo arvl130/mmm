@@ -6,7 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -40,11 +41,11 @@ public class User {
         joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
         inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
     )
-    private List<Role> roles;
+    private Set<Role> roles = new HashSet<>();
 
     @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<Meme> memes;
+    private Set<Meme> memes = new HashSet<>();
 }

@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -37,5 +38,5 @@ public class Meme {
         joinColumns = @JoinColumn(name = "meme_id", referencedColumnName = "id"),
         inverseJoinColumns = @JoinColumn(name = "keyword_id", referencedColumnName = "id")
     )
-    private List<Keyword> keywords;
+    private Set<Keyword> keywords = new HashSet<>();
 }

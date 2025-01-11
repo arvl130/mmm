@@ -6,7 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -23,5 +24,5 @@ public class Role {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToMany(mappedBy = "roles")
-    private List<User> users;
+    private Set<User> users = new HashSet<>();
 }
