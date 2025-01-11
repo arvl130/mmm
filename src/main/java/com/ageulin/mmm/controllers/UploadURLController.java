@@ -43,7 +43,7 @@ public class UploadURLController {
                 new StoreMemeUploadURLResponse(
                     "Created upload URL.",
                     presignedRequest.url().toString(),
-                    presignedRequest.expiration().atZone(ZoneId.of("UTC")),
+                    presignedRequest.expiration(),
                     id
                 )
             );
@@ -63,7 +63,7 @@ public class UploadURLController {
             .body(new UpdateMemeUploadURLResponse(
                 "Created upload URL.",
                 presignedRequest.url().toString(),
-                presignedRequest.expiration().atZone(ZoneId.of("UTC"))
+                presignedRequest.expiration()
             ));
     }
 
