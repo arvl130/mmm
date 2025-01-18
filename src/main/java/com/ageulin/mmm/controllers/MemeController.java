@@ -249,6 +249,34 @@ public class MemeController {
             .build();
 
         var savedMeme = this.memeRepository.save(modifiedMeme);
+        if (!updateMemeRequest.keywords().isEmpty()) {
+            var searchable = String.join(" ", updateMemeRequest.keywords());
+            this.memeRepository.updateSearchableByIdAndUserId(
+                savedMeme.getId(),
+                securityUser.getId(),
+                searchable
+            );
+
+            var chunks = StringMapper.toChunks(
+                String.join(" ", updateMemeRequest.keywords()),
+                2048
+            );
+            var generatedEmbeddings = this.llmService
+                .generateEmbeddings(chunks)
+                .embeddings();
+
+            this.memeEmbeddingRepository.deleteByMemeId(memeId);
+
+            for (int i = 0; i < generatedEmbeddings.size(); i++) {
+                var memeEmbedding = MemeEmbedding.builder()
+                    .text(chunks.get(i))
+                    .embedding(generatedEmbeddings.get(i))
+                    .meme(savedMeme)
+                    .build();
+
+                this.memeEmbeddingRepository.save(memeEmbedding);
+            }
+        }
 
         return ResponseEntity
             .status(HttpStatus.OK)
