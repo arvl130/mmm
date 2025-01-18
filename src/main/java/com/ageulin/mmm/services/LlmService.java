@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerErrorException;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 
 import java.util.List;
@@ -18,7 +19,14 @@ public class LlmService {
     private final BedrockRuntimeClient bedrockRuntimeClient;
 
     public LlmService() {
-        this.bedrockRuntimeClient =  BedrockRuntimeClient.builder().build();
+        var builder = BedrockRuntimeClient.builder();
+        var awsRegion = System.getenv("AWS_REGION");
+
+        if (null == awsRegion) {
+            builder.region(Region.AP_SOUTHEAST_1);
+        }
+
+        this.bedrockRuntimeClient =  builder.build();
     }
 
     public CohereEmbeddingResponse generateEmbeddings(List<String> inputText) {
