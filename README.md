@@ -9,20 +9,22 @@ MMM manages memes.
 This is a personal project I built to help me search memes I have saved
 from  the Internet.
 
-I also built this project to gain a deeper understanding on how Spring Boot,
-Spring Security, Spring Session, Spring Data JPA, Spring AI, AWS SDK for Java,
-Lombok, Hibernate and a bunch of other Java libraries work to build a scalable,
-fully functioning web application.
+I also built this project to gain a deeper understanding on how [Spring Boot](https://spring.io/projects/spring-boot),
+[Spring Security](https://spring.io/projects/spring-security), [Spring Session](https://spring.io/projects/spring-session),
+[Spring Data JPA](https://spring.io/projects/spring-data-jpa), [Spring AI](https://spring.io/projects/spring-ai),
+[AWS SDK for Java](https://aws.amazon.com/sdk-for-java/), [Lombok](https://projectlombok.org/),
+[Hibernate](https://hibernate.org/) and a bunch of other Java libraries work together to build a
+scalable, production-grade Java web application.
 
 If this application is useful or interesting to you, consider giving it a
 star on GitHub.
 
-This application comes with a frontend web UI available [here](https://github.com/arvl130/mmm-ui).
+This application also comes with a frontend web UI available [here](https://github.com/arvl130/mmm-ui).
 
 ## Features
 
-- Semantic Search with [Cohere Embed](https://cohere.com/embed) and PostgreSQL [`pgvector`](https://github.com/pgvector/pgvector)
-- Full Text Search with PostgreSQL [`tsvector`](https://www.postgresql.org/docs/current/textsearch.html)
+- Semantic Search with [Cohere Embed](https://cohere.com/embed) and [PostgreSQL](https://www.postgresql.org/) [`pgvector`](https://github.com/pgvector/pgvector)
+- Full Text Search with [PostgreSQL](https://www.postgresql.org/) [`tsvector`](https://www.postgresql.org/docs/current/textsearch.html)
 - AI Tag Suggestions with [Anthropic Claude Sonnet 3](https://www.anthropic.com/news/claude-3-family)
 - Authentication with Session management with [Spring Security](https://spring.io/projects/spring-security) and [Spring Session](https://spring.io/projects/spring-session)
 
