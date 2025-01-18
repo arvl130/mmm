@@ -17,7 +17,7 @@ I also built this project to gain a deeper understanding on how [Spring Boot](ht
 scalable, production-grade Java web application.
 
 If this application is useful or interesting to you, consider giving it a
-star on GitHub.
+star on [GitHub](https://github.com/arvl130/mmm).
 
 This application also comes with a frontend web UI available [here](https://github.com/arvl130/mmm-ui).
 
