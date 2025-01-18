@@ -9,12 +9,16 @@ import com.ageulin.mmm.dtos.responses.IndexMemeResponse;
 import com.ageulin.mmm.dtos.responses.ViewMemeResponse;
 import com.ageulin.mmm.entities.Keyword;
 import com.ageulin.mmm.entities.Meme;
+import com.ageulin.mmm.entities.MemeEmbedding;
 import com.ageulin.mmm.exceptions.HttpNotFoundException;
 import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.mappers.KeywordMapper;
 import com.ageulin.mmm.repositories.KeywordRepository;
+import com.ageulin.mmm.repositories.MemeEmbeddingRepository;
 import com.ageulin.mmm.repositories.MemeRepository;
 import com.ageulin.mmm.repositories.UserRepository;
+import com.ageulin.mmm.services.LlmService;
+import com.ageulin.mmm.mappers.StringMapper;
 import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -37,13 +41,19 @@ public class MemeController {
     private final MemeRepository memeRepository;
     private final UserRepository userRepository;
     private final KeywordRepository keywordRepository;
+    private final MemeEmbeddingRepository memeEmbeddingRepository;
+    private final LlmService llmService;
 
 
     public MemeController(
-        MemeRepository memeRepository,
-        UserRepository userRepository,
-        KeywordRepository keywordRepository
+            MemeRepository memeRepository,
+            UserRepository userRepository,
+            KeywordRepository keywordRepository,
+            MemeEmbeddingRepository memeEmbeddingRepository,
+            LlmService llmService
     ) {
+        this.memeEmbeddingRepository = memeEmbeddingRepository;
+        this.llmService = llmService;
         this.AWS_S3_BUCKET = System.getenv("AWS_S3_BUCKET");
         this.AWS_S3_BUCKET_BASE_URL = System.getenv("AWS_S3_BUCKET_BASE_URL");
         this.memeRepository = memeRepository;
@@ -107,6 +117,22 @@ public class MemeController {
                 securityUser.getId(),
                 searchable
             );
+
+            var chunks = StringMapper.toChunks(
+                String.join(" ", storeMemeRequest.keywords()), 2048
+            );
+            var generatedEmbeddings = this.llmService
+                .generateEmbeddings(chunks).embeddings();
+
+            for (int i = 0; i < generatedEmbeddings.size(); i++) {
+                var memeEmbedding = MemeEmbedding.builder()
+                    .text(chunks.get(i))
+                    .embedding(generatedEmbeddings.get(i))
+                    .meme(savedMeme)
+                    .build();
+
+                this.memeEmbeddingRepository.save(memeEmbedding);
+            }
         }
 
         var publicMeme = new PublicMeme(
