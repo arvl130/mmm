@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -39,4 +40,7 @@ public class Meme {
         inverseJoinColumns = @JoinColumn(name = "keyword_id", referencedColumnName = "id")
     )
     private Set<Keyword> keywords = new HashSet<>();
+
+    @OneToMany(mappedBy = "meme")
+    private List<MemeEmbedding> memeEmbeddings;
 }
