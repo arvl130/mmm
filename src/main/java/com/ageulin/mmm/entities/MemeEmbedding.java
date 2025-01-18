@@ -25,6 +25,6 @@ public class MemeEmbedding {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String text;
 
-    @Column(nullable = false, columnDefinition = "VECTOR(1024)")
+    @Column(nullable = false)
     private float[] embedding;
 }
