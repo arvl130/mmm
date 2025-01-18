@@ -27,6 +27,7 @@ This application also comes with a frontend web UI available [here](https://gith
 - Full Text Search with [PostgreSQL](https://www.postgresql.org/) [`tsvector`](https://www.postgresql.org/docs/current/textsearch.html)
 - AI Tag Suggestions with [Anthropic Claude Sonnet 3](https://www.anthropic.com/news/claude-3-family)
 - Authentication with Session management with [Spring Security](https://spring.io/projects/spring-security) and [Spring Session](https://spring.io/projects/spring-session)
+- Responsive frontend design with [ShadCN UI](https://ui.shadcn.com) and [Next.js](https://nextjs.org)
 
 ## Setup
 
