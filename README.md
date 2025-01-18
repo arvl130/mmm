@@ -34,40 +34,40 @@ This application also comes with a frontend web UI available [here](https://gith
 1. Clone this repository. 
 
 ```shell
-git clone https://github.com/arvl130/mmm
+$ git clone https://github.com/arvl130/mmm
 ```
 
 2. Configure the environment variables.
 
 ```shell
-export AWS_REGION=
-export AWS_ACCESS_KEY_ID=
-export AWS_SECRET_ACCESS_KEY=
-export AWS_S3_BUCKET=
-export AWS_S3_BUCKET_BASE_URL=
-export AWS_BEDROCK_MODEL_ID=
-export DATABASE_URL=
+$ export AWS_REGION=
+$ export AWS_ACCESS_KEY_ID=
+$ export AWS_SECRET_ACCESS_KEY=
+$ export AWS_S3_BUCKET=
+$ export AWS_S3_BUCKET_BASE_URL=
+$ export AWS_BEDROCK_MODEL_ID=
+$ export DATABASE_URL=
 ```
 
 3. Install the project dependencies, compile the code, and build the application.
 
 ```shell
-mvn clean install
+$ mvn clean install
 ```
 
 4. Run the application.
 
 ```shell
-mvn spring-boot:run
+$ mvn spring-boot:run
 ```
 
 5. (Optional) Build and deploy to an AWS Lambda environment with the SAM CLI.
 
 ```shell
-cp samconfig.toml.example samconfig.toml
-vi samconfig.toml # Enter the values for your environment variables, then press :wq to quit.
-sam build -u
-sam deploy
+$ cp samconfig.toml.example samconfig.toml
+$ vi samconfig.toml # Enter the values for your environment variables, then press :wq to quit.
+$ sam build -u
+$ sam deploy
 ```
 
 ## License
