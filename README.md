@@ -26,7 +26,7 @@ This application also comes with a frontend web UI available [here](https://gith
 - Semantic Search with [Cohere Embed](https://cohere.com/embed) and [PostgreSQL](https://www.postgresql.org/) [`pgvector`](https://github.com/pgvector/pgvector)
 - Full Text Search with [PostgreSQL](https://www.postgresql.org/) [`tsvector`](https://www.postgresql.org/docs/current/textsearch.html)
 - AI Tag Suggestions with [Anthropic Claude Sonnet 3](https://www.anthropic.com/news/claude-3-family)
-- Authentication with Session management with [Spring Security](https://spring.io/projects/spring-security) and [Spring Session](https://spring.io/projects/spring-session)
+- Authentication and Session management with [Spring Security](https://spring.io/projects/spring-security) and [Spring Session](https://spring.io/projects/spring-session)
 - Responsive frontend design with [ShadCN UI](https://ui.shadcn.com) and [Next.js](https://nextjs.org)
 
 ## Setup
