@@ -38,4 +38,17 @@ public interface MemeRepository extends CrudRepository<Meme, UUID> {
         nativeQuery = true
     )
     List<Meme> websearch(String searchTerm);
+
+    @Query(
+        value = """
+        SELECT m.*
+        FROM memes m
+        JOIN meme_embeddings me ON m.id = me.meme_id
+        WHERE (1 - (me.embedding <=> CAST(:embedding AS vector))) >= 0.2
+        ORDER BY me.embedding <=> CAST(:embedding AS vector)
+        LIMIT :limit
+        """,
+        nativeQuery = true
+    )
+    List<Meme> findSimilar(float[] embedding, int limit);
 }

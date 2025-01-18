@@ -183,6 +183,15 @@ public class MemeController {
             return switch (searchMode) {
                 case "FULL_TEXT" -> this.memeRepository
                     .websearch(searchTerm);
+                case "SEMANTIC" -> {
+                    var searchEmbedding = this.llmService
+                        .generateEmbeddings(List.of(searchTerm))
+                        .embeddings()
+                        .getFirst();
+
+                    yield this.memeRepository
+                        .findSimilar(searchEmbedding, 50);
+                }
                 case null, default -> this.memeRepository
                     .findDistinctByUserIdAndKeywords_NameContaining(userId, searchTerm);
             };
