@@ -7,6 +7,7 @@ import com.ageulin.mmm.dtos.requests.SignInRequest;
 import com.ageulin.mmm.dtos.requests.UpdateCurrentUserEmailRequest;
 import com.ageulin.mmm.dtos.requests.UpdateCurrentUserPasswordRequest;
 import com.ageulin.mmm.dtos.responses.*;
+import com.ageulin.mmm.exceptions.HttpConflictException;
 import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.exceptions.IncorrectUsernameOrPasswordException;
 import com.ageulin.mmm.repositories.UserRepository;
@@ -136,7 +137,7 @@ public class AuthController {
             .orElseThrow(() -> new HttpPreconditionFailedException("No user found."));
 
         if (this.userRepository.existsByEmail(updateRequest.newEmail())) {
-            throw new HttpPreconditionFailedException("Email is already in use.");
+            throw new HttpConflictException("Email is already in use.");
         }
 
         var currentSessionId = request.getSession().getId();

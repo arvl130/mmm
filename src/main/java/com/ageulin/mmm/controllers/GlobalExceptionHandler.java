@@ -1,6 +1,7 @@
 package com.ageulin.mmm.controllers;
 
 import com.ageulin.mmm.dtos.responses.BaseResponse;
+import com.ageulin.mmm.exceptions.HttpConflictException;
 import com.ageulin.mmm.exceptions.HttpNotFoundException;
 import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.exceptions.HttpTooManyRequestsException;
@@ -29,6 +30,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<BaseResponse> handleTooManyRequestsException(HttpTooManyRequestsException ex) {
         return ResponseEntity
             .status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(new BaseResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(HttpConflictException.class)
+    public ResponseEntity<BaseResponse> handleConflictException(HttpConflictException ex) {
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
             .body(new BaseResponse(ex.getMessage()));
     }
 }
