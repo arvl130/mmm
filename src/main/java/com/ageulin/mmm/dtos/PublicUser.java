@@ -4,6 +4,7 @@ import java.util.UUID;
 
 public record PublicUser(
     UUID id,
-    String email
+    String email,
+    String avatarUrl
 ) {
 }

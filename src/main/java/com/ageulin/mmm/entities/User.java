@@ -35,6 +35,12 @@ public class User {
     @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @Column
+    private Boolean hasAvatar;
+
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToMany
     @JoinTable(
         name = "user_roles",

@@ -67,6 +67,20 @@ public class UploadURLController {
             ));
     }
 
+    @GetMapping("/user/avatar")
+    public ResponseEntity<UpdateMemeUploadURLResponse> getUserAvatarUploadURL(
+            @AuthenticationPrincipal SecurityUser securityUser
+    ) {
+        var presignedRequest = createPresignedRequest("avatars/" + securityUser.getId());
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(new UpdateMemeUploadURLResponse(
+                "Created upload URL.",
+                presignedRequest.url().toString(),
+                presignedRequest.expiration()
+            ));
+    }
+
     private PresignedPutObjectRequest createPresignedRequest(String key) {
         try (var presigner = S3Presigner.create()) {
             var objectRequest = PutObjectRequest.builder()

@@ -31,11 +31,13 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.s3.S3Client;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@AllArgsConstructor
 public class AuthController {
+    private final String AWS_S3_BUCKET;
+    private final String AWS_S3_BUCKET_BASE_URL;
     private final SecurityContextHolderStrategy securityContextHolderStrategy
         = SecurityContextHolder.getContextHolderStrategy();
     private final SecurityContextRepository securityContextRepository =
@@ -45,6 +47,16 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final RememberMeServices rememberMeServices;
+
+    public AuthController(JdbcIndexedSessionRepository sessionRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, UserRepository userRepository, RememberMeServices rememberMeServices) {
+        this.AWS_S3_BUCKET = System.getenv("AWS_S3_BUCKET");
+        this.AWS_S3_BUCKET_BASE_URL = System.getenv("AWS_S3_BUCKET_BASE_URL");
+        this.sessionRepository = sessionRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.userRepository = userRepository;
+        this.rememberMeServices = rememberMeServices;
+    }
 
     @PostMapping("/signin")
     public ResponseEntity<BaseResponse> signIn(
@@ -66,7 +78,13 @@ public class AuthController {
         var user = this.userRepository.findByEmail(signInRequest.username())
             .orElseThrow(IncorrectUsernameOrPasswordException::new);
 
-        var publicUser = new PublicUser(user.getId(), user.getEmail());
+        var publicUser = new PublicUser(
+            user.getId(),
+            user.getEmail(),
+            user.getHasAvatar()
+                ? this.AWS_S3_BUCKET_BASE_URL + "/avatars/" + user.getId()
+                : null
+        );
 
         var context = securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(authentication);
@@ -94,30 +112,74 @@ public class AuthController {
                 .body(new CurrentUserResponse("Retrieved current user."));
         }
 
+        var optionalUser = this.userRepository.findById(usernameAndPasswordUser.getId());
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new CurrentUserResponse("Retrieved current user."));
+        }
+
+        var user = optionalUser.get();
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(
                 new CurrentUserResponse(
                     "Retrieved current user.",
                     new PublicUser(
-                        usernameAndPasswordUser.getId(),
-                        usernameAndPasswordUser.getUsername()
+                        user.getId(),
+                        user.getEmail(),
+                        user.getHasAvatar()
+                            ? this.AWS_S3_BUCKET_BASE_URL + "/avatars/" + user.getId()
+                            : null
                     )
                 )
             );
     }
 
     @Transactional
-    @PutMapping("/user/avatar")
-    public ResponseEntity<BaseResponse> updateCurrentUserAvatar(
+    @PostMapping("/user/avatar")
+    public ResponseEntity<BaseResponse> storeCurrentUserAvatar(
         @AuthenticationPrincipal SecurityUser securityUser
     ) {
         if (null == securityUser) {
             throw new HttpPreconditionFailedException("No user found.");
         }
 
+        var user = this.userRepository.findById(securityUser.getId())
+            .orElseThrow(() -> new HttpPreconditionFailedException("No user found."));
+
+        user.setHasAvatar(true);
+        this.userRepository.save(user);
+
         return ResponseEntity
-            .ok(new BaseResponse("Updated avatar."));
+            .ok(new BaseResponse("Created avatar."));
+    }
+
+    @Transactional
+    @DeleteMapping("/user/avatar")
+    public ResponseEntity<BaseResponse> destroyCurrentUserAvatar(
+        @AuthenticationPrincipal SecurityUser securityUser
+    ) {
+        if (null == securityUser) {
+            throw new HttpPreconditionFailedException("No user found.");
+        }
+
+        var user = this.userRepository.findById(securityUser.getId())
+            .orElseThrow(() -> new HttpPreconditionFailedException("No user found."));
+
+        try (var s3Client = S3Client.builder().build()) {
+            s3Client.deleteObject(builder -> builder
+                .bucket(this.AWS_S3_BUCKET)
+                .key("avatars/" + securityUser.getId())
+                .build()
+            );
+        }
+
+        user.setHasAvatar(false);
+        this.userRepository.save(user);
+
+        return ResponseEntity
+            .ok(new BaseResponse("Deleted avatar."));
     }
 
     @Transactional
