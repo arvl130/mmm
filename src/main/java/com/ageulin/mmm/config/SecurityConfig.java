@@ -14,8 +14,15 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.session.security.web.authentication.SpringSessionRememberMeServices;
+
+import java.util.HashMap;
 
 
 @Configuration
@@ -90,5 +97,17 @@ public class SecurityConfig {
         provider.setUserDetailsService(userDetailsService);
 
         return new ProviderManager(provider);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        var encoders = new HashMap<String, PasswordEncoder>();
+
+        String idForEncode = "scrypt";
+        encoders.put("bcrypt", new BCryptPasswordEncoder());
+        encoders.put("noop", NoOpPasswordEncoder.getInstance());
+        encoders.put(idForEncode, SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());
+
+        return new DelegatingPasswordEncoder(idForEncode, encoders);
     }
 }
