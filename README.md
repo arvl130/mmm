@@ -40,13 +40,13 @@ $ git clone https://github.com/arvl130/mmm
 2. Configure the environment variables.
 
 ```shell
+$ export SPRING_DATASOURCE_URL=
 $ export AWS_REGION=
 $ export AWS_ACCESS_KEY_ID=
 $ export AWS_SECRET_ACCESS_KEY=
 $ export AWS_S3_BUCKET=
 $ export AWS_S3_BUCKET_BASE_URL=
 $ export AWS_BEDROCK_MODEL_ID=
-$ export DATABASE_URL=
 ```
 
 3. Install the project dependencies, compile the code, and build the application.
