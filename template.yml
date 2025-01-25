@@ -38,17 +38,14 @@ Resources:
           AWS_S3_BUCKET: !Ref AWSS3Bucket
           AWS_S3_BUCKET_BASE_URL: !Ref AWSS3BucketBaseUrl
           AWS_BEDROCK_MODEL_ID: !Ref AWSBedrockModelId
-      Events:
-        HttpApiEvent:
-          Type: HttpApi
-          Properties:
-            TimeoutInMillis: 29000
-            PayloadFormatVersion: '1.0'
+      FunctionUrlConfig:
+        AuthType: NONE
     Metadata:
       DockerContext: .
       Dockerfile: Dockerfile
 
 Outputs:
-  SpringBootMmmApi:
-    Description: URL for application
-    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+  MmmFunctionFunctionUrlEndpoint:
+    Description: "The function URL endpoint for MmmFunction."
+    Value:
+      Fn::GetAtt: MmmFunctionUrl.FunctionUrl
