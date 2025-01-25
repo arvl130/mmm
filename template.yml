@@ -34,7 +34,7 @@ Resources:
       Timeout: 60
       Environment:
         Variables:
-          DATABASE_URL: !Ref DatabaseUrl
+          SPRING_DATASOURCE_URL: !Ref DatabaseUrl
           AWS_S3_BUCKET: !Ref AWSS3Bucket
           AWS_S3_BUCKET_BASE_URL: !Ref AWSS3BucketBaseUrl
           AWS_BEDROCK_MODEL_ID: !Ref AWSBedrockModelId
