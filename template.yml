@@ -42,7 +42,7 @@ Resources:
         HttpApiEvent:
           Type: HttpApi
           Properties:
-            TimeoutInMillis: 50000
+            TimeoutInMillis: 29000
             PayloadFormatVersion: '1.0'
     Metadata:
       DockerContext: .
