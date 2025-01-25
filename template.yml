@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: SpringBoot API with the aws-serverless-java-container library
+Description: SpringBoot API with the aws-lambda-web-adapter library
 
 Globals:
   Api:
@@ -23,9 +23,7 @@ Resources:
   MmmFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: com.ageulin.mmm.StreamLambdaHandler::handleRequest
-      Runtime: java21
-      CodeUri: .
+      PackageType: Image
       MemorySize: 1512
       Policies:
         - AWSLambdaBasicExecutionRole
@@ -34,6 +32,8 @@ Resources:
       Timeout: 60
       Environment:
         Variables:
+          RUST_LOG: info
+          AWS_LWA_ASYNC_INIT: true
           SPRING_DATASOURCE_URL: !Ref DatabaseUrl
           AWS_S3_BUCKET: !Ref AWSS3Bucket
           AWS_S3_BUCKET_BASE_URL: !Ref AWSS3BucketBaseUrl
@@ -44,6 +44,9 @@ Resources:
           Properties:
             TimeoutInMillis: 20000
             PayloadFormatVersion: '1.0'
+    Metadata:
+      DockerContext: .
+      Dockerfile: Dockerfile
 
 Outputs:
   SpringBootMmmApi:
