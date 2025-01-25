@@ -35,3 +35,7 @@ build/
 ### SAM CLI ###
 .aws-sam
 samconfig.toml
+
+### Environment variables ###
+.env
+.env.*
