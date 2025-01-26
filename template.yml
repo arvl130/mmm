@@ -23,8 +23,13 @@ Resources:
   MmmFunction:
     Type: AWS::Serverless::Function
     Properties:
-      PackageType: Image
       MemorySize: 1512
+      Handler: run.sh
+      CodeUri: .
+      Runtime: java21
+      AutoPublishAlias: live
+      SnapStart:
+        ApplyOn: PublishedVersions
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonBedrockFullAccess
@@ -33,16 +38,15 @@ Resources:
       Environment:
         Variables:
           RUST_LOG: info
-          AWS_LWA_ASYNC_INIT: true
+          AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
           SPRING_DATASOURCE_URL: !Ref DatabaseUrl
           AWS_S3_BUCKET: !Ref AWSS3Bucket
           AWS_S3_BUCKET_BASE_URL: !Ref AWSS3BucketBaseUrl
           AWS_BEDROCK_MODEL_ID: !Ref AWSBedrockModelId
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerX86:24
       FunctionUrlConfig:
         AuthType: NONE
-    Metadata:
-      DockerContext: .
-      Dockerfile: Dockerfile
 
 Outputs:
   MmmFunctionFunctionUrlEndpoint:
