@@ -19,6 +19,7 @@ import com.ageulin.mmm.repositories.MemeRepository;
 import com.ageulin.mmm.repositories.UserRepository;
 import com.ageulin.mmm.services.LlmService;
 import com.ageulin.mmm.mappers.StringMapper;
+import com.ageulin.mmm.services.StorageService;
 import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -26,8 +27,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,13 +35,12 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/memes")
 public class MemeController {
-    private final String AWS_S3_BUCKET;
-    private final String AWS_S3_BUCKET_BASE_URL;
     private final MemeRepository memeRepository;
     private final UserRepository userRepository;
     private final KeywordRepository keywordRepository;
     private final MemeEmbeddingRepository memeEmbeddingRepository;
     private final LlmService llmService;
+    private final StorageService storageService;
 
 
     public MemeController(
@@ -50,12 +48,12 @@ public class MemeController {
             UserRepository userRepository,
             KeywordRepository keywordRepository,
             MemeEmbeddingRepository memeEmbeddingRepository,
-            LlmService llmService
+            LlmService llmService,
+            StorageService storageService
     ) {
+        this.storageService = storageService;
         this.memeEmbeddingRepository = memeEmbeddingRepository;
         this.llmService = llmService;
-        this.AWS_S3_BUCKET = System.getenv("AWS_S3_BUCKET");
-        this.AWS_S3_BUCKET_BASE_URL = System.getenv("AWS_S3_BUCKET_BASE_URL");
         this.memeRepository = memeRepository;
         this.userRepository = userRepository;
         this.keywordRepository = keywordRepository;
@@ -74,13 +72,7 @@ public class MemeController {
             throw new HttpPreconditionFailedException("Meme already exists.");
         }
 
-        try (var s3Client = S3Client.builder().build()) {
-            s3Client.headObject(builder -> builder
-                .bucket(this.AWS_S3_BUCKET)
-                .key("memes/" + storeMemeRequest.id())
-                .build()
-            );
-        } catch (NoSuchKeyException ignored) {
+        if (!this.storageService.isExistingObject("memes/" + storeMemeRequest.id())) {
             throw new HttpPreconditionFailedException("No image was uploaded.");
         }
 
@@ -137,7 +129,7 @@ public class MemeController {
 
         var publicMeme = new PublicMeme(
             savedMeme.getId(),
-            this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId(),
+            this.storageService.getObjectURL("memes/" + savedMeme.getId()),
             savedMeme.getKeywords()
                 .stream()
                 .map(KeywordMapper::toPublic).toList()
@@ -160,7 +152,7 @@ public class MemeController {
             .map(meme ->
                 new PublicMeme(
                     meme.getId(),
-                    this.AWS_S3_BUCKET_BASE_URL + "/memes/" + meme.getId(),
+                    this.storageService.getObjectURL("memes/" + meme.getId()),
                     meme.getKeywords()
                         .stream()
                         .map(KeywordMapper::toPublic).toList()
@@ -213,7 +205,7 @@ public class MemeController {
                     "Retrieved meme.",
                     new PublicMeme(
                         meme.getId(),
-                        this.AWS_S3_BUCKET_BASE_URL + "/memes/" + meme.getId(),
+                        this.storageService.getObjectURL("memes/" + meme.getId()),
                         meme.getKeywords()
                             .stream()
                             .map(KeywordMapper::toPublic).toList()
@@ -285,7 +277,7 @@ public class MemeController {
                     "Updated meme.",
                     new PublicMeme(
                         savedMeme.getId(),
-                        this.AWS_S3_BUCKET_BASE_URL + "/memes/" + savedMeme.getId(),
+                        this.storageService.getObjectURL("memes/" + savedMeme.getId()),
                         savedMeme.getKeywords()
                             .stream()
                             .map(KeywordMapper::toPublic).toList()
@@ -303,14 +295,7 @@ public class MemeController {
         this.memeRepository.findByIdAndUserId(memeId, securityUser.getId())
             .orElseThrow(() -> new HttpNotFoundException("No such meme."));
 
-        try (var s3Client = S3Client.builder().build()) {
-            s3Client.deleteObject(builder -> builder
-                .bucket(this.AWS_S3_BUCKET)
-                .key("memes/" + memeId)
-                .build()
-            );
-        }
-
+        this.storageService.deleteObject("memes/" + memeId);
         this.memeRepository.deleteById(memeId);
 
         return ResponseEntity

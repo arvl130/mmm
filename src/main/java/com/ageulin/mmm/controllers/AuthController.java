@@ -11,11 +11,11 @@ import com.ageulin.mmm.exceptions.HttpConflictException;
 import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.exceptions.IncorrectUsernameOrPasswordException;
 import com.ageulin.mmm.repositories.UserRepository;
+import com.ageulin.mmm.services.StorageService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,13 +31,10 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
 import org.springframework.web.bind.annotation.*;
-import software.amazon.awssdk.services.s3.S3Client;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
-    private final String AWS_S3_BUCKET;
-    private final String AWS_S3_BUCKET_BASE_URL;
     private final SecurityContextHolderStrategy securityContextHolderStrategy
         = SecurityContextHolder.getContextHolderStrategy();
     private final SecurityContextRepository securityContextRepository =
@@ -47,10 +44,17 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final RememberMeServices rememberMeServices;
+    private final StorageService storageService;
 
-    public AuthController(JdbcIndexedSessionRepository sessionRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, UserRepository userRepository, RememberMeServices rememberMeServices) {
-        this.AWS_S3_BUCKET = System.getenv("AWS_S3_BUCKET");
-        this.AWS_S3_BUCKET_BASE_URL = System.getenv("AWS_S3_BUCKET_BASE_URL");
+    public AuthController(
+        JdbcIndexedSessionRepository sessionRepository,
+        PasswordEncoder passwordEncoder,
+        AuthenticationManager authenticationManager,
+        UserRepository userRepository,
+        RememberMeServices rememberMeServices,
+        StorageService storageService
+    ) {
+        this.storageService = storageService;
         this.sessionRepository = sessionRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -82,7 +86,7 @@ public class AuthController {
             user.getId(),
             user.getEmail(),
             user.getHasAvatar()
-                ? this.AWS_S3_BUCKET_BASE_URL + "/avatars/" + user.getId()
+                ? this.storageService.getObjectURL("avatars/" + user.getId())
                 : null
         );
 
@@ -129,7 +133,7 @@ public class AuthController {
                         user.getId(),
                         user.getEmail(),
                         user.getHasAvatar()
-                            ? this.AWS_S3_BUCKET_BASE_URL + "/avatars/" + user.getId()
+                            ? this.storageService.getObjectURL("avatars/" + user.getId())
                             : null
                     )
                 )
@@ -167,13 +171,7 @@ public class AuthController {
         var user = this.userRepository.findById(securityUser.getId())
             .orElseThrow(() -> new HttpPreconditionFailedException("No user found."));
 
-        try (var s3Client = S3Client.builder().build()) {
-            s3Client.deleteObject(builder -> builder
-                .bucket(this.AWS_S3_BUCKET)
-                .key("avatars/" + securityUser.getId())
-                .build()
-            );
-        }
+        this.storageService.deleteObject("avatars/" + securityUser.getId());
 
         user.setHasAvatar(false);
         this.userRepository.save(user);

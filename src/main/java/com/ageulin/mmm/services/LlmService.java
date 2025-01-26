@@ -3,6 +3,7 @@ package com.ageulin.mmm.services;
 import com.ageulin.mmm.dtos.requests.CohereEmbeddingRequest;
 import com.ageulin.mmm.dtos.responses.CohereEmbeddingResponse;
 import com.ageulin.mmm.enums.CohereInputType;
+import com.ageulin.mmm.utils.EnvironmentVariableUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -11,18 +12,25 @@ import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
+import software.amazon.awssdk.services.bedrockruntime.model.ConverseResponse;
+import software.amazon.awssdk.services.bedrockruntime.model.Message;
+import software.amazon.awssdk.services.bedrockruntime.model.SystemContentBlock;
 
 import java.util.List;
 
 @Service
 public class LlmService {
+    private final String AWS_BEDROCK_MODEL_ID;
     private final BedrockRuntimeClient bedrockRuntimeClient;
 
     public LlmService() {
+        this.AWS_BEDROCK_MODEL_ID = EnvironmentVariableUtils
+            .getenvOrFail("AWS_BEDROCK_MODEL_ID");
+
         var builder = BedrockRuntimeClient.builder();
         var awsRegion = System.getenv("AWS_REGION");
 
-        if (null == awsRegion) {
+        if (null == awsRegion || awsRegion.isEmpty()) {
             builder.region(Region.AP_SOUTHEAST_1);
         }
 
@@ -53,5 +61,20 @@ public class LlmService {
         } catch (JsonProcessingException e) {
             throw new ServerErrorException("JSON processing error occurred.", e);
         }
+    }
+
+    public ConverseResponse generateResponse(SystemContentBlock systemContentBlock, Message... message) {
+        return this.bedrockRuntimeClient.converse(request -> request
+                .modelId(this.AWS_BEDROCK_MODEL_ID)
+                .system(systemContentBlock)
+                .messages(message)
+                .inferenceConfig(config -> config
+                        .maxTokens(512)
+                        .temperature(0.5F)
+                        .topP(0.9F)));
+    }
+
+    public String getModelId() {
+        return this.AWS_BEDROCK_MODEL_ID;
     }
 }

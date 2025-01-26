@@ -2,9 +2,10 @@ package com.ageulin.mmm.controllers;
 
 import com.ageulin.mmm.config.SecurityUser;
 import com.ageulin.mmm.dtos.responses.KeywordSuggestionResponse;
-import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.exceptions.HttpTooManyRequestsException;
 import com.ageulin.mmm.repositories.MemeRepository;
+import com.ageulin.mmm.services.LlmService;
+import com.ageulin.mmm.services.StorageService;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
@@ -17,10 +18,7 @@ import org.springframework.web.server.ServerErrorException;
 import org.springframework.web.server.ServerWebInputException;
 import org.springframework.web.server.UnsupportedMediaTypeStatusException;
 import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.*;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -40,9 +38,17 @@ public class KeywordController {
     """;
 
     private final MemeRepository memeRepository;
+    private final StorageService storageService;
+    private final LlmService llmService;
 
-    public KeywordController(MemeRepository memeRepository) {
+    public KeywordController(
+        MemeRepository memeRepository,
+        StorageService storageService,
+        LlmService llmService
+    ) {
         this.memeRepository = memeRepository;
+        this.storageService = storageService;
+        this.llmService = llmService;
     }
 
     @PostMapping("/keywords/suggestions")
@@ -59,9 +65,7 @@ public class KeywordController {
                 .status(HttpStatus.OK)
                 .body(new KeywordSuggestionResponse(
                     "Received reply from AI model.",
-                    censorAWSAccountNumber(
-                        System.getenv("AWS_BEDROCK_MODEL_ID")
-                    ),
+                    censorAWSAccountNumber(this.llmService.getModelId()),
                     prompt,
                     file.getContentType(),
                     file.getOriginalFilename(),
@@ -82,13 +86,8 @@ public class KeywordController {
             .findByIdAndUserId(id, securityUser.getId())
             .orElseThrow(() -> new ServerWebInputException("No such meme."));
 
-        try (var s3Client = S3Client.builder().build()) {
-            var inputStream = s3Client.getObject(builder -> builder
-                .bucket(System.getenv("AWS_S3_BUCKET"))
-                .key("memes/" + meme.getId())
-                .build()
-            );
-
+        try {
+            var inputStream = this.storageService.getObject("memes/" + meme.getId());
             var imageBytes = inputStream.readAllBytes();
             var imageContentType = inputStream.response().contentType();
             var keywords = getKeywordSuggestions(imageBytes, imageContentType);
@@ -97,22 +96,18 @@ public class KeywordController {
                 .status(HttpStatus.OK)
                 .body(new KeywordSuggestionResponse(
                     "Received reply from AI model.",
-                    censorAWSAccountNumber(
-                        System.getenv("AWS_BEDROCK_MODEL_ID")
-                    ),
+                    censorAWSAccountNumber(this.llmService.getModelId()),
                     prompt,
                     imageContentType,
                     keywords
                 ));
 
-        } catch (NoSuchKeyException ignored) {
-            throw new HttpPreconditionFailedException("No image uploaded for meme.");
         } catch (IOException e) {
             throw new ServerErrorException("Meme could not be retrieved.", e);
         }
     }
 
-    private static Set<String> getKeywordSuggestions(
+    private Set<String> getKeywordSuggestions(
         byte[] bytes, @Nullable String contentType
     ) {
         var imageFormat = switch (contentType) {
@@ -141,33 +136,25 @@ public class KeywordController {
                 .role(ConversationRole.USER)
                 .build();
 
-        try (var client = BedrockRuntimeClient.builder().build()) {
-            try {
-                ConverseResponse response = client.converse(request -> request
-                    .modelId(System.getenv("AWS_BEDROCK_MODEL_ID"))
-                    .system(systemMessage)
-                    .messages(imageMessage)
-                    .inferenceConfig(config -> config
-                        .maxTokens(512)
-                        .temperature(0.5F)
-                        .topP(0.9F)));
+        try {
+            ConverseResponse response = this.llmService
+                .generateResponse(systemMessage, imageMessage);
 
-                var content = response.output().message().content();
-                if (content.isEmpty()) {
-                    return Set.of();
-                } else {
-                    return Arrays
-                        .stream(content.getFirst().text().split(","))
-                        .map(s -> s.trim().toLowerCase())
-                        // Sometimes, the LLM will add a period at the end of the
-                        // keyword (possibly because it is the last in the list?).
-                        // So we remove it here if that is the case.
-                        .map(s -> s.endsWith(".") ? s.substring(0, s.length() - 1) : s)
-                        .collect(Collectors.toSet());
-                }
-            } catch (ThrottlingException e) {
-                throw new HttpTooManyRequestsException();
+            var content = response.output().message().content();
+            if (content.isEmpty()) {
+                return Set.of();
+            } else {
+                return Arrays
+                    .stream(content.getFirst().text().split(","))
+                    .map(s -> s.trim().toLowerCase())
+                    // Sometimes, the LLM will add a period at the end of the
+                    // keyword (possibly because it is the last in the list?).
+                    // So we remove it here if that is the case.
+                    .map(s -> s.endsWith(".") ? s.substring(0, s.length() - 1) : s)
+                    .collect(Collectors.toSet());
             }
+        } catch (ThrottlingException e) {
+            throw new HttpTooManyRequestsException();
         }
     }
 

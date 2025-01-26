@@ -1,10 +1,7 @@
 package com.ageulin.mmm.controllers;
 
 import com.ageulin.mmm.dtos.responses.BaseResponse;
-import com.ageulin.mmm.exceptions.HttpConflictException;
-import com.ageulin.mmm.exceptions.HttpNotFoundException;
-import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
-import com.ageulin.mmm.exceptions.HttpTooManyRequestsException;
+import com.ageulin.mmm.exceptions.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -37,6 +34,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<BaseResponse> handleConflictException(HttpConflictException ex) {
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
+            .body(new BaseResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(MissingOrInvalidEnvironmentVariableException.class)
+    public ResponseEntity<BaseResponse> handleConflictException(MissingOrInvalidEnvironmentVariableException ex) {
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(new BaseResponse(ex.getMessage()));
     }
 }
