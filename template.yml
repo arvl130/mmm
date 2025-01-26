@@ -24,7 +24,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      MemorySize: 512
+      MemorySize: 1024
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonBedrockFullAccess
