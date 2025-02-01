@@ -4,9 +4,11 @@ import com.ageulin.mmm.config.SecurityUser;
 import com.ageulin.mmm.config.UsernameAndPasswordUser;
 import com.ageulin.mmm.dtos.PublicUser;
 import com.ageulin.mmm.dtos.requests.SignInRequest;
+import com.ageulin.mmm.dtos.requests.SignUpRequest;
 import com.ageulin.mmm.dtos.requests.UpdateCurrentUserEmailRequest;
 import com.ageulin.mmm.dtos.requests.UpdateCurrentUserPasswordRequest;
 import com.ageulin.mmm.dtos.responses.*;
+import com.ageulin.mmm.entities.User;
 import com.ageulin.mmm.exceptions.HttpConflictException;
 import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.exceptions.IncorrectUsernameOrPasswordException;
@@ -101,8 +103,24 @@ public class AuthController {
             .body(new SignInResponse("Sign in success.", publicUser));
     }
 
+    @Transactional
     @PostMapping("/signup")
-    public ResponseEntity<BaseResponse> signUp() {
+    public ResponseEntity<BaseResponse> signUp(
+        @Valid @RequestBody SignUpRequest request
+    ) {
+        var emailIsTaken = this.userRepository.existsByEmail(request.username());
+        if (emailIsTaken) {
+            throw new HttpPreconditionFailedException("This email is already taken. Please use another email.");
+        }
+
+        var newUser = new User();
+        newUser.setName(request.name());
+        newUser.setEmail(request.username());
+        newUser.setPassword(this.passwordEncoder.encode(request.password()));
+        newUser.setHasAvatar(false);
+
+        this.userRepository.save(newUser);
+
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(new BaseResponse("Sign up success."));
