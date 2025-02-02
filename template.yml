@@ -18,6 +18,12 @@ Parameters:
     Type: String
   AWSBedrockModelId:
     Type: String
+  ResendApiKey:
+    Type: String
+  MailFromUrl:
+    Type: String
+  AppUrl:
+    Type: String
 
 Resources:
   MmmFunction:
@@ -38,6 +44,9 @@ Resources:
           AWS_S3_BUCKET: !Ref AWSS3Bucket
           AWS_S3_BUCKET_BASE_URL: !Ref AWSS3BucketBaseUrl
           AWS_BEDROCK_MODEL_ID: !Ref AWSBedrockModelId
+          RESEND_API_KEY: !Ref ResendApiKey
+          MAIL_FROM_URL: !Ref MailFromUrl
+          APP_URL: !Ref AppUrl
       FunctionUrlConfig:
         AuthType: NONE
     Metadata:

@@ -47,6 +47,9 @@ $ export AWS_SECRET_ACCESS_KEY=
 $ export AWS_S3_BUCKET=
 $ export AWS_S3_BUCKET_BASE_URL=
 $ export AWS_BEDROCK_MODEL_ID=
+$ export RESEND_API_KEY=
+$ export MAIL_FROM_URL=
+$ export APP_URL=
 ```
 
 3. Install the project dependencies, compile the code, and build the application.

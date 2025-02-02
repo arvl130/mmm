@@ -3,17 +3,19 @@ package com.ageulin.mmm.controllers;
 import com.ageulin.mmm.config.SecurityUser;
 import com.ageulin.mmm.config.UsernameAndPasswordUser;
 import com.ageulin.mmm.dtos.PublicUser;
-import com.ageulin.mmm.dtos.requests.SignInRequest;
-import com.ageulin.mmm.dtos.requests.SignUpRequest;
-import com.ageulin.mmm.dtos.requests.UpdateCurrentUserEmailRequest;
-import com.ageulin.mmm.dtos.requests.UpdateCurrentUserPasswordRequest;
+import com.ageulin.mmm.dtos.requests.*;
 import com.ageulin.mmm.dtos.responses.*;
+import com.ageulin.mmm.entities.PasswordResetToken;
 import com.ageulin.mmm.entities.User;
 import com.ageulin.mmm.exceptions.HttpConflictException;
 import com.ageulin.mmm.exceptions.HttpPreconditionFailedException;
 import com.ageulin.mmm.exceptions.IncorrectUsernameOrPasswordException;
+import com.ageulin.mmm.repositories.PasswordResetTokenRepository;
 import com.ageulin.mmm.repositories.UserRepository;
+import com.ageulin.mmm.services.MailService;
 import com.ageulin.mmm.services.StorageService;
+import com.ageulin.mmm.utils.EnvironmentVariableUtils;
+import com.resend.core.exception.ResendException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -33,35 +35,47 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerErrorException;
+import org.springframework.web.server.ServerWebInputException;
+
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+    private final String APP_URL;
     private final SecurityContextHolderStrategy securityContextHolderStrategy
         = SecurityContextHolder.getContextHolderStrategy();
     private final SecurityContextRepository securityContextRepository =
         new HttpSessionSecurityContextRepository();
     private final JdbcIndexedSessionRepository sessionRepository;
+    private final UserRepository userRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
     private final RememberMeServices rememberMeServices;
     private final StorageService storageService;
+    private final MailService mailService;
 
     public AuthController(
         JdbcIndexedSessionRepository sessionRepository,
         PasswordEncoder passwordEncoder,
         AuthenticationManager authenticationManager,
         UserRepository userRepository,
+        PasswordResetTokenRepository passwordResetTokenRepository,
         RememberMeServices rememberMeServices,
-        StorageService storageService
+        StorageService storageService,
+        MailService mailService
     ) {
-        this.storageService = storageService;
+        this.APP_URL = EnvironmentVariableUtils.getenvOrFail("APP_URL");
         this.sessionRepository = sessionRepository;
+        this.userRepository = userRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
         this.rememberMeServices = rememberMeServices;
+        this.storageService = storageService;
+        this.mailService = mailService;
     }
 
     @PostMapping("/signin")
@@ -277,6 +291,71 @@ public class AuthController {
 
         return ResponseEntity
             .ok(new BaseResponse("Updated password."));
+    }
+
+    @Transactional
+    @PostMapping("/password-reset-link")
+    public ResponseEntity<BaseResponse> sendPasswordResetLink(
+        @Valid @RequestBody SendPasswordResetLinkRequest request
+    ) {
+        var optionalUser = this.userRepository.findByEmail(request.email());
+        if (optionalUser.isEmpty()) {
+            throw new ServerWebInputException("This email is could not be found.");
+        }
+
+        var user = optionalUser.get();
+        var newResetToken = PasswordResetToken
+            .builder()
+            .user(user)
+            .build();
+        var savedResetToken = this.passwordResetTokenRepository.save(newResetToken);
+
+        try {
+            this.mailService
+                .sendPlainTextMail(
+                    "Password Reset Link Requested",
+                    "Here is your password reset link: "
+                        + this.APP_URL
+                        + "/password-reset/"
+                        + savedResetToken.getId(),
+                    user.getEmail()
+                );
+        } catch (ResendException ex) {
+            throw new ServerErrorException(
+                "Email could not be sent: " + ex.getMessage(), ex
+            );
+        }
+
+        return ResponseEntity
+            .ok(new BaseResponse("Password reset link sent."));
+    }
+
+    @Transactional
+    @PostMapping("/reset-password")
+    public ResponseEntity<BaseResponse> resetPassword(
+        @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        var optionalResetToken = this.passwordResetTokenRepository.findById(request.token());
+        if (optionalResetToken.isEmpty()) {
+            throw new ServerWebInputException("No such token.");
+        }
+
+        var resetToken = optionalResetToken.get();
+        var now = Instant.now();
+        var expiredAt = resetToken.getExpiredAt();
+        var isExpired = now.compareTo(expiredAt);
+
+        if (isExpired >= 0) {
+            throw new ServerWebInputException("Token has expired.");
+        }
+
+        var user = resetToken.getUser();
+        user.setPassword(this.passwordEncoder.encode(request.newPassword()));
+        this.userRepository.save(user);
+        this.passwordResetTokenRepository.deleteById(resetToken.getId());
+
+        return ResponseEntity
+            .ok(new BaseResponse("Password reset."));
     }
 
     @ExceptionHandler(IncorrectUsernameOrPasswordException.class)
