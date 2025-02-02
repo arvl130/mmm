@@ -6,7 +6,7 @@ public record SignUpRequest(
     @NotNull
     String name,
     @NotNull
-    String username,
+    String email,
     @NotNull
     String password
 ) {

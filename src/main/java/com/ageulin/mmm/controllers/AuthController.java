@@ -86,7 +86,7 @@ public class AuthController {
     ) {
         var token = UsernamePasswordAuthenticationToken
             .unauthenticated(
-                signInRequest.username(),
+                signInRequest.email(),
                 signInRequest.password()
             );
 
@@ -95,7 +95,7 @@ public class AuthController {
             throw new IncorrectUsernameOrPasswordException();
         }
 
-        var user = this.userRepository.findByEmail(signInRequest.username())
+        var user = this.userRepository.findByEmail(signInRequest.email())
             .orElseThrow(IncorrectUsernameOrPasswordException::new);
 
         var publicUser = new PublicUser(
@@ -122,14 +122,14 @@ public class AuthController {
     public ResponseEntity<BaseResponse> signUp(
         @Valid @RequestBody SignUpRequest request
     ) {
-        var emailIsTaken = this.userRepository.existsByEmail(request.username());
+        var emailIsTaken = this.userRepository.existsByEmail(request.email());
         if (emailIsTaken) {
             throw new HttpPreconditionFailedException("This email is already taken. Please use another email.");
         }
 
         var newUser = new User();
         newUser.setName(request.name());
-        newUser.setEmail(request.username());
+        newUser.setEmail(request.email());
         newUser.setPassword(this.passwordEncoder.encode(request.password()));
         newUser.setHasAvatar(false);
 

@@ -73,7 +73,7 @@ public class SecurityConfig {
         return username -> {
             var user = userRepository.findByEmail(username);
             if (user.isEmpty()) {
-                throw new UsernameNotFoundException("Incorrect username or password.");
+                throw new UsernameNotFoundException("Incorrect email or password.");
             }
 
             var u = user.get();
