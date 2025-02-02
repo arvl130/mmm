@@ -100,6 +100,7 @@ public class AuthController {
 
         var publicUser = new PublicUser(
             user.getId(),
+            user.getName(),
             user.getEmail(),
             user.getHasAvatar()
                 ? this.storageService.getObjectURL("avatars/" + user.getId())
@@ -163,6 +164,7 @@ public class AuthController {
                     "Retrieved current user.",
                     new PublicUser(
                         user.getId(),
+                        user.getName(),
                         user.getEmail(),
                         user.getHasAvatar()
                             ? this.storageService.getObjectURL("avatars/" + user.getId())
