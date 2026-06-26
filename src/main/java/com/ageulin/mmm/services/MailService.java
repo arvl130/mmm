@@ -25,7 +25,7 @@ public class MailService {
         String plainTextBody,
         String ...recipients
     ) throws ResendException {
-        var mailFromURL = "MMM <noreply@"  + this.fromURL + ">";
+        var mailFromURL = "MMM <mmm@"  + this.fromURL + ">";
         var emailOptions = CreateEmailOptions.builder()
             .from(mailFromURL)
             .to(recipients)
