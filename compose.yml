@@ -2,6 +2,10 @@ services:
   spring-app:
     image: ghcr.io/arvl130/mmm:master
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     ports:
       - "10110:8080"
     environment:
